@@ -41,12 +41,20 @@ CLEANFILES = stunnel3
 stunnel_CPPFLAGS = -I/usr/kerberos/include
 
 # Additional preprocesor definitions
+if WOLFSSL
+stunnel_CPPFLAGS += -I$(SSLDIR)/include  -I$(SSLDIR)/include/wolfssl
+else
 stunnel_CPPFLAGS += -I$(SSLDIR)/include
+endif
 stunnel_CPPFLAGS += -DLIBDIR='"$(pkglibdir)"'
 stunnel_CPPFLAGS += -DCONFDIR='"$(sysconfdir)/stunnel"'
 
 # SSL library
+if WOLFSSL
+stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lwolfssl
+else
 stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lssl -lcrypto
+endif
 
 # stunnel3 script
 edit = sed \

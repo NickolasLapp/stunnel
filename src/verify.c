@@ -636,6 +636,7 @@ NOEXPORT OCSP_RESPONSE *ocsp_get_response(CLI *c,
             goto cleanup;
         case 0:
             s_log(LOG_INFO, "OCSP: s_poll_wait: TIMEOUTbusy exceeded");
+        if(err<=0)
             goto cleanup;
         }
     }

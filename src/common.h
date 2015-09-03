@@ -45,7 +45,14 @@
 #define LIBWRAP_CLIENTS 5
 
 /* CPU stack size */
-#define DEFAULT_STACK_SIZE 65536
+#ifdef WITH_WOLFSSL
+	/* Default option for wolfssl is Tom's fastmath with timing resistance
+     * which providers far greater security. This can be reduced to
+     * 65536 if not using TFM timing resistance. */
+    #define DEFAULT_STACK_SIZE 131072
+#else
+    #define DEFAULT_STACK_SIZE 65536
+#endif
 /* #define DEBUG_STACK_SIZE */
 
 /* I/O buffer size: 18432 (0x4800) is the maximum size of SSL record payload */
@@ -98,6 +105,8 @@ typedef int                 ssize_t;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_NONSTDC_NO_DEPRECATE
 #define _CRT_NON_CONFORMING_SWPRINTFS
+#define HAVE_OSSL_ENGINE_H
+#define HAVE_OSSL_OCSP_H
 /* prevent including wincrypt.h, as it defines its own OCSP_RESPONSE */
 #define __WINCRYPT_H__
 #define S_EADDRINUSE  WSAEADDRINUSE
@@ -404,6 +413,17 @@ extern char *sys_errlist[];
 #define S_ISREG(m) (((m)&S_IFMT)==S_IFREG)
 #endif
 
+/**************************************** wolfSSL headers */
+#ifdef WITH_WOLFSSL
+#include <wolfssl/options.h>
+#include <wolfssl/wolfcrypt/coding.h>
+#ifdef WOLFSSL_DEBUG_ON
+#include <wolfssl/wolfcrypt/logging.h>
+#endif /* WOLFSSL_DEBUG_ON */
+#include <wolfssl/wolfcrypt/dh.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#endif /* defined(WITH_WOLFSSL) */
+
 /**************************************** OpenSSL headers */
 
 #define OPENSSL_THREAD_DEFINES
@@ -425,27 +445,41 @@ extern char *sys_errlist[];
 #endif /* OpenSSL older than 0.9.8 */
 
 /* non-blocking OCSP API is not available before OpenSSL 0.9.8h */
-#if OPENSSL_VERSION_NUMBER<0x00908080L
+#if OPENSSL_VERSION_NUMBER<0x00908080L && !defined(WITH_WOLFSSL)
 #ifndef OPENSSL_NO_OCSP
 #define OPENSSL_NO_OCSP
 #endif /* !defined(OPENSSL_NO_OCSP) */
 #endif /* OpenSSL older than 0.9.8h */
 
-#if OPENSSL_VERSION_NUMBER<0x10000000L
+#if OPENSSL_VERSION_NUMBER<0x10000000L && !defined(WITH_WOLFSSL)
 #define OPENSSL_NO_TLSEXT
 #define OPENSSL_NO_PSK
 #endif /* OpenSSL older than 1.0.0 */
 
-#if OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1)
+#if (OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1)) && !defined(WITH_WOLFSSL)
 #define OPENSSL_NO_TLS1_1
 #define OPENSSL_NO_TLS1_2
-#endif /* OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1) */
+#endif /* (OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1)) && !defined(WITH_WOLFSSL) */
 
-#if OPENSSL_VERSION_NUMBER>=0x10100000L
+#if OPENSSL_VERSION_NUMBER>=0x10100000L || defined(WITH_WOLFSSL)
 #ifndef OPENSSL_NO_SSL2
 #define OPENSSL_NO_SSL2
 #endif /* !defined(OPENSSL_NO_SSL2) */
 #endif /* OpenSSL 1.1.0 or newer */
+
+#if defined(WITH_WOLFSSL) && !defined(ENABLE_SSL3)
+#ifndef OPENSSL_NO_SSL3
+#define OPENSSL_NO_SSL3
+#endif /* !defined(OPENSSL_NO_SSL3) */
+#endif /* def WITH_WOLFSSL*/
+
+#if !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE)
+#define OPENSSL_NO_ENGINE
+#endif /* !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE) */
+
+#if !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP)
+#define OPENSSL_NO_OCSP
+#endif /* !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP) */
 
 #if defined(USE_WIN32) && defined(OPENSSL_FIPS)
 #define USE_FIPS

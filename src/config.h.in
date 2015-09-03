@@ -6,6 +6,9 @@
 /* Entropy Gathering Daemon socket path */
 #undef EGD_SOCKET
 
+/* Define to 1 to enable SSL3 (Disabled by default with wolfSSL). */
+#undef ENABLE_SSL3
+
 /* Define to 1 if you have the `accept4' function. */
 #undef HAVE_ACCEPT4
 
@@ -205,6 +208,9 @@
    */
 #undef LT_OBJDIR
 
+/* Wolfssl does not currently support ENGINE with Stunnel */
+#undef OPENSSL_NO_ENGINE
+
 /* Name of package */
 #undef PACKAGE
 
@@ -262,6 +268,12 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to 1 if you using WOLFSSL header file. */
+#undef WITH_WOLFSSL
+
+/* Define to 1 to enable WOLFSSL debug messages. */
+#undef WOLFSSL_DEBUG_ON
 
 /* Use GNU source */
 #undef _GNU_SOURCE

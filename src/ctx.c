@@ -54,7 +54,9 @@ NOEXPORT int matches_wildcard(char *, char *);
 /* DH/ECDH */
 #ifndef OPENSSL_NO_DH
 NOEXPORT int dh_init(SERVICE_OPTIONS *);
+#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *);
+#endif /*WITH_WOLFSSL*/
 #endif /* OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *);
@@ -66,9 +68,14 @@ NOEXPORT int conf_init(SERVICE_OPTIONS *section);
 /* authentication */
 NOEXPORT int auth_init(SERVICE_OPTIONS *);
 #ifndef OPENSSL_NO_PSK
-NOEXPORT unsigned psk_client_callback(SSL *, const char *,
+
+/* psk_client_callback and psk_server_callback are
+ * a type definition fairly common to ssl implementations
+ * however are use as functions in openssl. Provide 
+ * alternate function name with applicable symantics */
+NOEXPORT unsigned psk_client_cb(SSL *, const char *,
     char *, unsigned, unsigned char *, unsigned);
-NOEXPORT unsigned psk_server_callback(SSL *, const char *,
+NOEXPORT unsigned psk_server_cb(SSL *, const char *,
     unsigned char *, unsigned);
 #endif /* !defined(OPENSSL_NO_PSK) */
 NOEXPORT int load_cert(SERVICE_OPTIONS *);
@@ -275,8 +282,17 @@ NOEXPORT int matches_wildcard(char *servername, char *pattern) {
 #ifndef OPENSSL_NO_DH
 
 NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
-    DH *dh=NULL;
 
+#ifdef WITH_WOLFSSL
+    s_log(LOG_DEBUG, "DH initialization");
+    if(wolfSSL_CTX_SetTmpDH_file(section->ctx, section->cert,
+               SSL_FILETYPE_ASN1) == SSL_SUCCESS) { /* DH file loading failed */
+		return 0;
+     } else {
+		s_log(LOG_DEBUG, "Error loading DH params from file: %s", section->cert);
+	}
+#else
+    DH *dh=NULL;
     s_log(LOG_DEBUG, "DH initialization");
 #ifndef OPENSSL_NO_ENGINE
     if(!section->engine) /* cert is a file and not an identifier */
@@ -288,6 +304,8 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
         DH_free(dh);
         return 0; /* OK */
     }
+#endif /* WITH_WOLFSSL */
+
     enter_critical_section(CRIT_DH); /* it only needs an rwlock here */
     SSL_CTX_set_tmp_dh(section->ctx, dh_params);
     leave_critical_section(CRIT_DH);
@@ -297,6 +315,7 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
     return 0; /* OK */
 }
 
+#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *cert) {
     DH *dh;
     BIO *bio;
@@ -321,6 +340,7 @@ NOEXPORT DH *dh_read(char *cert) {
     s_log(LOG_DEBUG, "Using DH parameters from %s", cert);
     return dh;
 }
+#endif /* WITH_WOLFSSL */
 
 #endif /* OPENSSL_NO_DH */
 
@@ -421,9 +441,9 @@ NOEXPORT int auth_init(SERVICE_OPTIONS *section) {
 #ifndef OPENSSL_NO_PSK
     if(section->psk_keys) {
         if(section->option.client)
-            SSL_CTX_set_psk_client_callback(section->ctx, psk_client_callback);
+            SSL_CTX_set_psk_client_callback(section->ctx, psk_client_cb);
         else
-            SSL_CTX_set_psk_server_callback(section->ctx, psk_server_callback);
+            SSL_CTX_set_psk_server_callback(section->ctx, psk_server_cb);
         result=0;
     }
 #endif /* !defined(OPENSSL_NO_PSK) */
@@ -432,7 +452,7 @@ NOEXPORT int auth_init(SERVICE_OPTIONS *section) {
 
 #ifndef OPENSSL_NO_PSK
 
-NOEXPORT unsigned psk_client_callback(SSL *ssl, const char *hint,
+NOEXPORT unsigned psk_client_cb(SSL *ssl, const char *hint,
     char *identity, unsigned max_identity_len,
     unsigned char *psk, unsigned max_psk_len) {
     CLI *c;
@@ -464,7 +484,7 @@ NOEXPORT unsigned psk_client_callback(SSL *ssl, const char *hint,
     return (unsigned)(c->opt->psk_selected->key_len);
 }
 
-NOEXPORT unsigned psk_server_callback(SSL *ssl, const char *identity,
+NOEXPORT unsigned psk_server_cb(SSL *ssl, const char *identity,
     unsigned char *psk, unsigned max_psk_len) {
     CLI *c;
     PSK_KEYS *found;
@@ -689,7 +709,7 @@ NOEXPORT int sess_new_cb(SSL *ssl, SSL_SESSION *sess) {
     val_tmp=val=str_alloc((size_t)val_len);
     i2d_SSL_SESSION(sess, &val_tmp);
 
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
     session_id=SSL_SESSION_get_id(sess, &session_id_length);
 #else
     session_id=(const unsigned char *)sess->session_id;
@@ -715,7 +735,7 @@ NOEXPORT SSL_SESSION *sess_get_cb(SSL *ssl,
         return NULL;
     val_tmp=val;
     sess=d2i_SSL_SESSION(NULL,
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
         (const unsigned char **)
 #endif /* OpenSSL version >= 0.8.0 */
         &val_tmp, (long)val_len);
@@ -727,7 +747,7 @@ NOEXPORT void sess_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess) {
     const unsigned char *session_id;
     unsigned int session_id_length;
 
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
     session_id=SSL_SESSION_get_id(sess, &session_id_length);
 #else
     session_id=(const unsigned char *)sess->session_id;
