@@ -68,14 +68,9 @@ NOEXPORT int conf_init(SERVICE_OPTIONS *section);
 /* authentication */
 NOEXPORT int auth_init(SERVICE_OPTIONS *);
 #ifndef OPENSSL_NO_PSK
-
-/* psk_client_callback and psk_server_callback are
- * a type definition fairly common to ssl implementations
- * however are use as functions in openssl. Provide 
- * alternate function name with applicable symantics */
-NOEXPORT unsigned psk_client_cb(SSL *, const char *,
+NOEXPORT unsigned psk_client_callback(SSL *, const char *,
     char *, unsigned, unsigned char *, unsigned);
-NOEXPORT unsigned psk_server_cb(SSL *, const char *,
+NOEXPORT unsigned psk_server_callback(SSL *, const char *,
     unsigned char *, unsigned);
 #endif /* !defined(OPENSSL_NO_PSK) */
 NOEXPORT int load_cert(SERVICE_OPTIONS *);
@@ -441,9 +436,9 @@ NOEXPORT int auth_init(SERVICE_OPTIONS *section) {
 #ifndef OPENSSL_NO_PSK
     if(section->psk_keys) {
         if(section->option.client)
-            SSL_CTX_set_psk_client_callback(section->ctx, psk_client_cb);
+            SSL_CTX_set_psk_client_callback(section->ctx, psk_client_callback);
         else
-            SSL_CTX_set_psk_server_callback(section->ctx, psk_server_cb);
+            SSL_CTX_set_psk_server_callback(section->ctx, psk_server_callback);
         result=0;
     }
 #endif /* !defined(OPENSSL_NO_PSK) */
@@ -452,7 +447,7 @@ NOEXPORT int auth_init(SERVICE_OPTIONS *section) {
 
 #ifndef OPENSSL_NO_PSK
 
-NOEXPORT unsigned psk_client_cb(SSL *ssl, const char *hint,
+NOEXPORT unsigned psk_client_callback(SSL *ssl, const char *hint,
     char *identity, unsigned max_identity_len,
     unsigned char *psk, unsigned max_psk_len) {
     CLI *c;
@@ -484,7 +479,7 @@ NOEXPORT unsigned psk_client_cb(SSL *ssl, const char *hint,
     return (unsigned)(c->opt->psk_selected->key_len);
 }
 
-NOEXPORT unsigned psk_server_cb(SSL *ssl, const char *identity,
+NOEXPORT unsigned psk_server_callback(SSL *ssl, const char *identity,
     unsigned char *psk, unsigned max_psk_len) {
     CLI *c;
     PSK_KEYS *found;

@@ -634,6 +634,10 @@ am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
 SSLDIR
+WOLFSSL_DEBUG_ON_FALSE
+WOLFSSL_DEBUG_ON_TRUE
+WOLFSSL_FALSE
+WOLFSSL_TRUE
 DEFAULT_GROUP
 RANDOM_FILE
 LIBTOOL_DEPS
@@ -774,6 +778,8 @@ enable_ipv6
 enable_fips
 enable_systemd
 enable_libwrap
+enable_wolfssl
+enable_wolfssldebug
 with_ssl
 '
       ac_precious_vars='build_alias
@@ -1418,6 +1424,8 @@ Optional Features:
   --disable-fips          disable OpenSSL FIPS support
   --disable-systemd       disable systemd socket activation support
   --disable-libwrap       disable TCP wrappers support
+  --enable-wolfssl        Enable stunnel with wolfSSL (default: disabled)
+  --enable-wolfssldebug   Enable wolfSSL debugging information (default: disabled)
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -14963,8 +14971,60 @@ find_ssl_dir() { :
     fi
 }
 
-SSLDIR=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL directory" >&5
+# Check whether --enable-wolfssl was given.
+if test "${enable_wolfssl+set}" = set; then :
+  enableval=$enable_wolfssl;  ENABLED_WOLFSSL=$enableval
+else
+   ENABLED_WOLFSSL=$no
+fi
+
+
+if test "x$ENABLED_WOLFSSL" = "xyes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWITH_WOLFSSL"
+    SSLDIR="/usr/local"
+
+$as_echo "#define WITH_WOLFSSL 1" >>confdefs.h
+
+fi
+
+ if test "x$ENABLED_WOLFSSL" = "xyes"; then
+  WOLFSSL_TRUE=
+  WOLFSSL_FALSE='#'
+else
+  WOLFSSL_TRUE='#'
+  WOLFSSL_FALSE=
+fi
+
+
+# Check whether --enable-wolfssldebug was given.
+if test "${enable_wolfssldebug+set}" = set; then :
+  enableval=$enable_wolfssldebug;  ENABLED_WOLFSSLDEBUG=$enableval
+else
+   ENABLED_WOLFSSLDEBUG=$no
+fi
+
+if test "x$ENABLED_WOLFSSLDEBUG" = "xyes"
+then
+    AM_CFLAGS="$AM_CFLAGS -DWITH_WOLFSSL_DEBUG"
+
+$as_echo "#define WOLFSSL_DEBUG_ON 1" >>confdefs.h
+
+fi
+
+ if test "x$ENABLED_WOLFSSLDEBUG" = "xyes"; then
+  WOLFSSL_DEBUG_ON_TRUE=
+  WOLFSSL_DEBUG_ON_FALSE='#'
+else
+  WOLFSSL_DEBUG_ON_TRUE='#'
+  WOLFSSL_DEBUG_ON_FALSE=
+fi
+
+
+if test "x$ENABLED_WOLFSSL" = "xno"
+then
+    SSLDIR=""
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL directory" >&5
 $as_echo_n "checking for SSL directory... " >&6; }
 
 # Check whether --with-ssl was given.
@@ -14975,13 +15035,14 @@ else
 
 fi
 
-if test -z "$SSLDIR"; then
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
+    if test -z "$SSLDIR"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found" >&5
 $as_echo "not found" >&6; }
-as_fn_error $? "
-Could not find your SSL library installation dir
-Use --with-ssl option to fix this problem
-" "$LINENO" 5
+    as_fn_error $? "
+    Could not find your SSL library installation dir
+    Use --with-ssl option to fix this problem
+    " "$LINENO" 5
+    fi
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $SSLDIR" >&5
 $as_echo "$SSLDIR" >&6; }
@@ -14992,9 +15053,17 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+if test "x$ENABLED_WOLFSSL" = "xyes"
+then
+valid_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -I$SSLDIR/include -I$SSLDIR/include/wolfssl"
+valid_LIBS="$LIBS"; LIBS="$LIBS -L$SSLDIR/lib64 -L$SSLDIR/lib -lwolfssl"
+else
 valid_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -I$SSLDIR/include"
 valid_LIBS="$LIBS"; LIBS="$LIBS -L$SSLDIR/lib64 -L$SSLDIR/lib -lssl -lcrypto"
+fi
 
+if test "x$ENABLED_WOLFSSL" = "xno"
+then
 as_ac_Header=`$as_echo "ac_cv_header_$SSLDIR/include/openssl/engine.h" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$SSLDIR/include/openssl/engine.h" "$as_ac_Header" "$ac_includes_default"
 if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
@@ -15188,6 +15257,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${WOLFSSL_TRUE}" && test -z "${WOLFSSL_FALSE}"; then
+  as_fn_error $? "conditional \"WOLFSSL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${WOLFSSL_DEBUG_ON_TRUE}" && test -z "${WOLFSSL_DEBUG_ON_FALSE}"; then
+  as_fn_error $? "conditional \"WOLFSSL_DEBUG_ON\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

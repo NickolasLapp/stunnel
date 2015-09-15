@@ -467,7 +467,7 @@ extern char *sys_errlist[];
 #endif /* !defined(OPENSSL_NO_SSL2) */
 #endif /* OpenSSL 1.1.0 or newer */
 
-#if defined(WITH_WOLFSSL) && !defined(ENABLE_SSL3)
+#if defined(WITH_WOLFSSL)
 #ifndef OPENSSL_NO_SSL3
 #define OPENSSL_NO_SSL3
 #endif /* !defined(OPENSSL_NO_SSL3) */
