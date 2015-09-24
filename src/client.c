@@ -476,11 +476,7 @@ NOEXPORT void ssl_start(CLI *c) {
         new_chain(c);
         peer_cert=SSL_get_peer_certificate(c->ssl);
         if(peer_cert) /* c->redirect was set by the callback */
-        #ifdef WITH_WOLFSSL
-            (void)peer_cert;
-        #else
             X509_free(peer_cert);
-        #endif
 
         else if(c->opt->redirect_addr.names)
             c->redirect=REDIRECT_ON;
