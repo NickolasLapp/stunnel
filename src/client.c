@@ -477,7 +477,6 @@ NOEXPORT void ssl_start(CLI *c) {
         peer_cert=SSL_get_peer_certificate(c->ssl);
         if(peer_cert) /* c->redirect was set by the callback */
             X509_free(peer_cert);
-
         else if(c->opt->redirect_addr.names)
             c->redirect=REDIRECT_ON;
         SSL_SESSION_set_ex_data(SSL_get_session(c->ssl),
