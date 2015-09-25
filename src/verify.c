@@ -92,7 +92,6 @@ int verify_init(SERVICE_OPTIONS *section) {
     if(section->crl_file || section->crl_dir)
         if(crl_init(section))
             return 1; /* FAILED */
-    }
 #ifdef WITH_WOLFSSL
     if(section->crl_dir) {
         /* WOLFSSL handles CRL internally, no need to deal with lookups */
@@ -456,6 +455,7 @@ NOEXPORT int compare_pubkeys(X509 *c1, X509 *c2) {
 #endif
 
 NOEXPORT int ocsp_check(CLI *c, X509_STORE_CTX *callback_ctx) {
+#ifndef WITH_WOLFSSL
     X509 *cert;
     OCSP_CERTID *cert_id;
     STACK_OF(OPENSSL_STRING) *aia;
