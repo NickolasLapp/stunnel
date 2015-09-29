@@ -60,7 +60,6 @@ NOEXPORT int cert_check_local(X509_STORE_CTX *);
 NOEXPORT int compare_pubkeys(X509 *, X509 *);
 #if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 NOEXPORT int ocsp_check(CLI *, X509_STORE_CTX *);
-#ifndef WITH_WOLFSSL
 NOEXPORT int ocsp_request(CLI *, X509_STORE_CTX *, OCSP_CERTID *, char *);
 NOEXPORT OCSP_RESPONSE *ocsp_get_response(CLI *, OCSP_REQUEST *, char *);
 #endif /*!defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL) */
@@ -91,8 +90,6 @@ int verify_init(SERVICE_OPTIONS *section) {
 
     /* CRL initialization */
     if(section->crl_file || section->crl_dir)
-        if(crl_init(section))
-            return 1; /* FAILED */
 #ifdef WITH_WOLFSSL
     if(section->crl_dir) {
         /* WOLFSSL handles CRL internally, no need to deal with lookups */
@@ -107,7 +104,10 @@ int verify_init(SERVICE_OPTIONS *section) {
             return 1; /* FAILED */
         }
     }
-#endif /* WITH_WOLFSSL */
+#else
+    if(crl_init(section))
+        return 1; /* FAILED */
+#endif /*WITH_WOLFSSL*/
 
 #if defined(WITH_WOLFSSL) && !defined(OPENSSL_NO_OCSP)
     if(section->ocsp_url)
