@@ -580,7 +580,7 @@ NOEXPORT void new_chain(CLI *c) {
     c->opt->chain=chain; /* this race condition is safe to ignore */
     ui_new_chain(c->opt->section_number);
     s_log(LOG_DEBUG, "Peer certificate was cached (%d bytes)", len);
-#endif
+#endif /* ifdef WITH_WOLFSSL */
 }
 
 /****************************** transfer data */

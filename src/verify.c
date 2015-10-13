@@ -109,7 +109,7 @@ int verify_init(SERVICE_OPTIONS *section) {
         return 1; /* FAILED */
 #endif /*WITH_WOLFSSL*/
 
-#if defined(WITH_WOLFSSL) && !defined(OPENSSL_NO_OCSP)
+#ifdef WITH_WOLFSSL
     if(section->ocsp_url)
     {
         if(wolfSSL_CTX_SetOCSP_OverrideURL(section->ctx, section->ocsp_url)
@@ -141,7 +141,7 @@ int verify_init(SERVICE_OPTIONS *section) {
         }
         s_log(LOG_INFO, "Enabled OCSP with aia extension.");
     }
-#endif /* !defined(WITH_WOLFSSL) && !defined(OPENSSL_NO_OCSP)*/
+#endif /* ifdef WITH_WOLFSSL */
 
     /* verify callback setup */
     if(section->verify_level>=0)

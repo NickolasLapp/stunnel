@@ -445,39 +445,63 @@ extern char *sys_errlist[];
 #endif /* OpenSSL older than 0.9.8 */
 
 /* non-blocking OCSP API is not available before OpenSSL 0.9.8h */
-#if OPENSSL_VERSION_NUMBER<0x00908080L && !defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER<0x00908080L
 #ifndef OPENSSL_NO_OCSP
 #define OPENSSL_NO_OCSP
 #endif /* !defined(OPENSSL_NO_OCSP) */
 #endif /* OpenSSL older than 0.9.8h */
 
-#if OPENSSL_VERSION_NUMBER<0x10000000L && !defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER<0x10000000L
 #define OPENSSL_NO_TLSEXT
 #define OPENSSL_NO_PSK
 #endif /* OpenSSL older than 1.0.0 */
 
-#if (OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1)) && !defined(WITH_WOLFSSL)
+#if (OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1))
 #define OPENSSL_NO_TLS1_1
 #define OPENSSL_NO_TLS1_2
-#endif /* (OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1)) && !defined(WITH_WOLFSSL) */
+#endif /* (OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1)) */
 
-#if OPENSSL_VERSION_NUMBER>=0x10100000L || defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER>=0x10100000L
 #ifndef OPENSSL_NO_SSL2
 #define OPENSSL_NO_SSL2
 #endif /* !defined(OPENSSL_NO_SSL2) */
 #endif /* OpenSSL 1.1.0 or newer */
 
-#if defined(WITH_WOLFSSL) && !defined(WOLFSSL_ALLOW_SSLV3)
+
+/* WOLFSSL_SPECIFIC ifdefs */
+#ifdef WITH_WOLFSSL
+
+#ifdef WOLFSSL_ALLOW_SSLV3
 #ifndef OPENSSL_NO_SSL3
 #define OPENSSL_NO_SSL3
 #endif /* !defined(OPENSSL_NO_SSL3) */
-#endif /* defined (WITH_WOLFSSL) && !defined(WOLFSSL_ALLOW_SSLV3) */
+#endif /*WOLFSSL_ALLOW_SSLv3 */
+#ifdef OPENSSL_NO_OCSP
+#undef OPENSSL_NO_OCSP
+#endif /* OPENSSL_NO_OCSP */
+#ifdef OPENSSL_NO_TLSEXT
+#undef OPENSSL_NO_TLSEXT
+#endif /* OPENSSL_NO_TLSEXT */
+#ifdef OPENSSL_NO_PSK
+#undef OPENSSL_NO_PSK
+#endif /* OPENSSL_NO_PSK */
+#ifdef OPENSSL_NO_TLS1_1
+#undef OPENSSL_NO_TLS1_1
+#endif /* OPENSSL_NO_TLS1_1 */
+#ifdef OPENSSL_NO_TLS1_2
+#undef OPENSSL_NO_TLS1_2
+#endif /* OPENSSL_NO_TLS1_2 */
+#ifndef OPENSSL_NO_ENGINE
+#define OPENSSL_NO_ENGINE
+#endif /* OPENSSL_NO_ENGINE */
+
+#endif /* defined (WITH_WOLFSSL) */
 
 #if !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE)
 #define OPENSSL_NO_ENGINE
 #endif /* !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE) */
 
-#if !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP)
+#if !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 #define OPENSSL_NO_OCSP
 #endif /* !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP) */
 

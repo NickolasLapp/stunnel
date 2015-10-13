@@ -205,9 +205,6 @@
    */
 #undef LT_OBJDIR
 
-/* Wolfssl does not currently support ENGINE with Stunnel */
-#undef OPENSSL_NO_ENGINE
-
 /* Name of package */
 #undef PACKAGE
 

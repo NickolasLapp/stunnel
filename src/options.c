@@ -511,15 +511,6 @@ int alphasort(const struct dirent **a, const struct dirent **b) {
 
 void options_defaults() {
     /* initialize globals *before* opening the config file */
-#ifdef WITH_WOLFSSL
-    /* wolfSSL mallocs memory for the client/server methods
-     * This memory needs to be freed if we are reloading with defaults */
-    if(new_service_options.client_method)
-        XFREE(new_service_options.client_method, NULL, NULL);
-    if(new_service_options.server_method)
-        XFREE(new_service_options.server_method, NULL, NULL);
-#endif /*WITH_WOLFSSL*/
-
     memset(&new_global_options, 0, sizeof(GLOBAL_OPTIONS)); /* reset global options */
     memset(&new_service_options, 0, sizeof(SERVICE_OPTIONS)); /* reset local options */
     new_service_options.next=NULL;
@@ -2559,14 +2550,6 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
     case CMD_EXEC:
         if(strcasecmp(opt, "sslVersion"))
             break;
-#ifdef WITH_WOLFSSL
-       /* wolfSSL allocates memory in client/server_methods. Needs to be freed
-        * before we assign a new method to the section object */
-        if(section->client_method)
-            XFREE(section->client_method, ctx->heap, DYNAMIC_TYPE_METHOD);
-        if(section->server_method)
-            XFREE(section->server_method, ctx->heap, DYNAMIC_TYPE_METHOD);
-#endif
         if(!strcasecmp(arg, "all")) {
 #if OPENSSL_VERSION_NUMBER>=0x10100000L
             section->client_method=(SSL_METHOD *)TLS_client_method();
@@ -2618,28 +2601,14 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         if(new_global_options.option.fips) {
 #ifndef OPENSSL_NO_SSL2
             if(section->option.client ?
-#ifdef WITH_WOLFSSL
-                    (section->client_method &&
-                     secton->client_method->version.protocol == SSLv2_MAJOR) :
-                    (section->server_method &&
-                     secton->server_method->version.protocol == SSLv2_MAJOR));
-#else
                     section->client_method==(SSL_METHOD *)SSLv2_client_method() :
                     section->server_method==(SSL_METHOD *)SSLv2_server_method())
-#endif /* WITH_WOLFSSL */
                     return "\"sslVersion = SSLv2\" not supported in FIPS mode";
 #endif /* !defined(OPENSSL_NO_SSL2) */
 #ifndef OPENSSL_NO_SSL3
             if(section->option.client ?
-#ifdef WITH_WOLFSSL
-                    (section->client_method &&
-                     secton->client_method->version.protocol == SSLv3_MAJOR) :
-                    (section->server_method &&
-                     secton->server_method->version.protocol == SSLv3_MAJOR));
-#else
                     section->client_method==(SSL_METHOD *)SSLv3_client_method() :
                     section->server_method==(SSL_METHOD *)SSLv3_server_method())
-#endif /* WITH_WOLFSSL */
                 return "\"sslVersion = SSLv3\" not supported in FIPS mode";
 #endif /* !defined(OPENSSL_NO_SSL3) */
         }
