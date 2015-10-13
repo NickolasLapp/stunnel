@@ -471,7 +471,7 @@ extern char *sys_errlist[];
 /* WOLFSSL_SPECIFIC ifdefs */
 #ifdef WITH_WOLFSSL
 
-#ifdef WOLFSSL_ALLOW_SSLV3
+#ifndef WOLFSSL_ALLOW_SSLV3
 #ifndef OPENSSL_NO_SSL3
 #define OPENSSL_NO_SSL3
 #endif /* !defined(OPENSSL_NO_SSL3) */
