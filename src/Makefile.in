@@ -87,6 +87,10 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 bin_PROGRAMS = stunnel$(EXEEXT)
+
+# Additional preprocesor definitions
+@WOLFSSL_TRUE@am__append_1 = -I$(SSLDIR)/include  -I$(SSLDIR)/include/wolfssl
+@WOLFSSL_FALSE@am__append_2 = -I$(SSLDIR)/include
 subdir = src
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(srcdir)/config.h.in $(top_srcdir)/auto/depcomp
@@ -372,13 +376,13 @@ EXTRA_DIST = stunnel3.in $(win32_gui_sources) $(win32_cli_sources) \
 CLEANFILES = stunnel3
 
 # Red Hat "by design" bug #82369
-
-# Additional preprocesor definitions
-stunnel_CPPFLAGS = -I/usr/kerberos/include -I$(SSLDIR)/include \
-	-DLIBDIR='"$(pkglibdir)"' -DCONFDIR='"$(sysconfdir)/stunnel"'
+stunnel_CPPFLAGS = -I/usr/kerberos/include $(am__append_1) \
+	$(am__append_2) -DLIBDIR='"$(pkglibdir)"' \
+	-DCONFDIR='"$(sysconfdir)/stunnel"'
+@WOLFSSL_FALSE@stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lssl -lcrypto
 
 # SSL library
-stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lssl -lcrypto
+@WOLFSSL_TRUE@stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lwolfssl
 
 # stunnel3 script
 edit = sed \

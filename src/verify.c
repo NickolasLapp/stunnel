@@ -573,7 +573,6 @@ NOEXPORT int ocsp_request(CLI *c, X509_STORE_CTX *callback_ctx,
         s_log(LOG_ERR, "OCSP: Invalid or unsupported nonce");
         goto cleanup;
     }
-#endif
     if(OCSP_basic_verify(basic_response, X509_STORE_CTX_get_chain(callback_ctx),
             SSL_CTX_get_cert_store(c->opt->ctx), c->opt->ocsp_flags)<=0) {
         sslerror("OCSP: OCSP_basic_verify");
@@ -696,7 +695,6 @@ NOEXPORT OCSP_RESPONSE *ocsp_get_response(CLI *c,
             goto cleanup;
         case 0:
             s_log(LOG_INFO, "OCSP: s_poll_wait: TIMEOUTbusy exceeded");
-        if(err<=0)
             goto cleanup;
         }
     }

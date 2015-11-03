@@ -75,6 +75,12 @@
 /* Define to 1 if you have the `openpty' function. */
 #undef HAVE_OPENPTY
 
+/* Define to 1 if you have <engine.h> header file. */
+#undef HAVE_OSSL_ENGINE_H
+
+/* Define to 1 if you have <ocsp.h> header file. */
+#undef HAVE_OSSL_OCSP_H
+
 /* Define to 1 if you have the `pipe2' function. */
 #undef HAVE_PIPE2
 
@@ -204,6 +210,9 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
+
+/* Wolfssl does not currently support ENGINE with Stunnel */
+#undef OPENSSL_NO_ENGINE
 
 /* Name of package */
 #undef PACKAGE
