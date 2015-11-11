@@ -343,6 +343,12 @@ NOEXPORT DH *dh_read(char *cert) {
 
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
+#ifdef WITH_WOLFSSL
+    /* wolfSSL automatically detects ecdh parameters from ECC key file.
+     * No need to load explicitly */
+    (void)section;
+    return 0;
+#else
     EC_KEY *ecdh;
 
     s_log(LOG_DEBUG, "ECDH initialization");
@@ -358,6 +364,7 @@ NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
     s_log(LOG_DEBUG, "ECDH initialized with curve %s",
         OBJ_nid2ln(section->curve));
     return 0; /* OK */
+#endif /* WITH_WOLFSSL */
 }
 #endif /* OPENSSL_NO_ECDH */
 
