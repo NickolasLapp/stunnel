@@ -298,6 +298,9 @@ typedef int SOCKET;
     /* Unix-specific headers */
 #include <signal.h>         /* signal */
 #include <sys/wait.h>       /* wait */
+#ifdef HAVE_LIMITS_H
+#include <limits.h>         /* INT_MAX */
+#endif
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>   /* getrlimit */
 #endif
@@ -538,6 +541,12 @@ extern char *sys_errlist[];
 /* not defined in public headers before OpenSSL 0.9.8 */
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 #endif /* !defined(OPENSSL_NO_COMP) */
+
+#ifndef OPENSSL_VERSION
+#define OPENSSL_VERSION SSLEAY_VERSION
+#define OpenSSL_version_num() SSLeay()
+#define OpenSSL_version(x) SSLeay_version(x)
+#endif
 
 /**************************************** other defines */
 

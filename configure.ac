@@ -1,13 +1,12 @@
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([stunnel],[5.25])
+AC_INIT([stunnel],[5.27])
 AC_MSG_NOTICE([**************************************** initialization])
 AC_CONFIG_AUX_DIR(auto)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_SRCDIR([src/stunnel.c])
 AM_INIT_AUTOMAKE
-#AM_INIT_AUTOMAKE([subdir-objects])
 AC_DEFINE([_GNU_SOURCE], [1], [Use GNU source])
 
 AM_CONDITIONAL([AUTHOR_TESTS], [test -d ".git"])
@@ -159,8 +158,10 @@ AC_MSG_NOTICE([**************************************** header files])
 # AC_HEADER_DIRENT
 # AC_HEADER_STDC
 # AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([stdint.h inttypes.h malloc.h ucontext.h pthread.h poll.h tcpd.h stropts.h grp.h unistd.h util.h libutil.h pty.h])
-AC_CHECK_HEADERS([sys/types.h sys/select.h sys/poll.h sys/socket.h sys/un.h sys/ioctl.h sys/filio.h sys/resource.h sys/uio.h sys/syscall.h])
+AC_CHECK_HEADERS([stdint.h inttypes.h malloc.h ucontext.h pthread.h poll.h \
+    tcpd.h stropts.h grp.h unistd.h util.h libutil.h pty.h limits.h])
+AC_CHECK_HEADERS([sys/types.h sys/select.h sys/poll.h sys/socket.h sys/un.h \
+    sys/ioctl.h sys/filio.h sys/resource.h sys/uio.h sys/syscall.h])
 AC_CHECK_HEADERS([linux/sched.h])
 AC_CHECK_MEMBERS([struct msghdr.msg_control],
     [AC_DEFINE([HAVE_MSGHDR_MSG_CONTROL], [1],
@@ -392,7 +393,7 @@ check_ssl_dir() { :
 find_ssl_dir() { :
     stunnel_prefix="$prefix"
     test "x$stunnel_prefix" = "xNONE" && stunnel_prefix=$ac_default_prefix
-    for main_dir in "$stunnel_prefix" "/usr/local" "/usr/lib" "/usr/pkg" "/opt/local" "/opt" "/usr" ""; do
+    for main_dir in "$stunnel_prefix" "/usr/local" "/usr/lib" "/usr/pkg" "/opt/local" "/opt" "/opt/csw" "/usr" ""; do
         for sub_dir in "/ssl" "/openssl" "/ossl" ""; do
             check_ssl_dir "$sysroot$main_dir$sub_dir"
             test -n "$SSLDIR" && return

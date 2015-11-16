@@ -478,17 +478,20 @@ int bind_ports(void) {
                 /* fchown() does *not* work on UNIX sockets */
                 if(!lchown(opt->local_addr.un.sun_path, opt->uid, opt->gid))
                     s_log(LOG_DEBUG,
-                        "Socket chown succeeded: %s, UID=%d, GID=%d",
-                        opt->local_addr.un.sun_path, opt->uid, opt->gid);
+                        "Socket chown succeeded: %s, UID=%u, GID=%u",
+                        opt->local_addr.un.sun_path,
+                        (unsigned)opt->uid, (unsigned)opt->gid);
                 else if(lstat(opt->local_addr.un.sun_path, &sb))
                     sockerror(opt->local_addr.un.sun_path);
                 else if(sb.st_uid==opt->uid && sb.st_gid==opt->gid)
                     s_log(LOG_DEBUG,
-                        "Socket chown unneeded: %s, UID=%d, GID=%d",
-                        opt->local_addr.un.sun_path, opt->uid, opt->gid);
+                        "Socket chown unneeded: %s, UID=%u, GID=%u",
+                        opt->local_addr.un.sun_path,
+                        (unsigned)opt->uid, (unsigned)opt->gid);
                 else
-                    s_log(LOG_ERR, "Socket chown failed: %s, UID=%d, GID=%d",
-                        opt->local_addr.un.sun_path, opt->uid, opt->gid);
+                    s_log(LOG_ERR, "Socket chown failed: %s, UID=%u, GID=%u",
+                        opt->local_addr.un.sun_path,
+                        (unsigned)opt->uid, (unsigned)opt->gid);
             }
 #endif
             s_poll_add(fds, opt->fd, 1, 0);
@@ -782,9 +785,9 @@ NOEXPORT char *signal_name(int signum) {
 
 void stunnel_info(int level) {
     s_log(level, "stunnel " STUNNEL_VERSION " on " HOST " platform");
-    if(strcmp(OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION))) {
+    if(strcmp(OPENSSL_VERSION_TEXT, OpenSSL_version(OPENSSL_VERSION))) {
         s_log(level, "Compiled with " OPENSSL_VERSION_TEXT);
-        s_log(level, "Running  with %s", SSLeay_version(SSLEAY_VERSION));
+        s_log(level, "Running  with %s", OpenSSL_version(OPENSSL_VERSION));
         s_log(level, "Update OpenSSL shared libraries or rebuild stunnel");
     } else {
         s_log(level, "Compiled/running with " OPENSSL_VERSION_TEXT);

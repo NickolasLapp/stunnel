@@ -402,8 +402,9 @@ NOEXPORT void ssl_start(CLI *c) {
         SSL_set_accept_state(c->ssl);
     }
 
-    unsafe_openssl=SSLeay()<0x0090810fL ||
-        (SSLeay()>=0x10000000L && SSLeay()<0x1000002fL);
+    unsafe_openssl=OpenSSL_version_num()<0x0090810fL ||
+        (OpenSSL_version_num()>=0x10000000L &&
+        OpenSSL_version_num()<0x1000002fL);
     while(1) {
         /* critical section for OpenSSL version < 0.9.8p or 1.x.x < 1.0.0b *
          * this critical section is a crude workaround for CVE-2010-3864   *
@@ -1177,6 +1178,8 @@ NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
 
 #else /* standard Unix version */
 
+extern char **environ;
+
 NOEXPORT SOCKET connect_local(CLI *c) { /* spawn local process */
     int fd[2], pid;
     char **env;
@@ -1441,7 +1444,7 @@ NOEXPORT void setup_connect_addr(CLI *c) {
 }
 
 NOEXPORT void local_bind(CLI *c) {
-#ifndef USE_WIN32
+#if defined(__linux__) || (defined(IP_BINDANY) && defined(IPV6_BINDANY))
     int on;
 
     on=1;
@@ -1481,6 +1484,7 @@ NOEXPORT void local_bind(CLI *c) {
     }
 #else
     /* unsupported platform */
+    /* FIXME: move this check to options.c */
     if(c->opt->option.transparent_src) {
         s_log(LOG_ERR, "Transparent proxy in remote mode is not supported"
             " on this platform");
