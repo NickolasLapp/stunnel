@@ -487,6 +487,10 @@ extern char *sys_errlist[];
 #define OPENSSL_NO_COMP
 #endif /* OPENSSL_NO_COMP */
 
+#ifndef OPENSSL_NO_SSL2
+#define OPENSSL_NO_SSL2
+#endif /* !defined(OPENSSL_NO_SSL2) */
+
 #endif /* defined (WITH_WOLFSSL) */
 
 #if defined(USE_WIN32) && defined(OPENSSL_FIPS)

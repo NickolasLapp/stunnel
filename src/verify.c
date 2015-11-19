@@ -458,7 +458,6 @@ NOEXPORT int compare_pubkeys(X509 *c1, X509 *c2) {
 #endif
 
 NOEXPORT int ocsp_check(CLI *c, X509_STORE_CTX *callback_ctx) {
-#ifndef WITH_WOLFSSL
     X509 *cert;
     OCSP_CERTID *cert_id;
     STACK_OF(OPENSSL_STRING) *aia;
@@ -518,11 +517,9 @@ NOEXPORT int ocsp_check(CLI *c, X509_STORE_CTX *callback_ctx) {
 
     OCSP_CERTID_free(cert_id);
     X509_STORE_CTX_set_error(callback_ctx, saved_error);
-#endif /* WITH_WOLFSSL */
     return 1; /* accept */
 }
 
-#ifndef WITH_WOLFSSL
 /* returns one of:
  * V_OCSP_CERTSTATUS_GOOD
  * V_OCSP_CERTSTATUS_REVOKED
@@ -740,7 +737,6 @@ NOEXPORT X509 *get_current_issuer(X509_STORE_CTX *callback_ctx) {
         ++depth; /* index of the issuer cert */
     return sk_X509_value(chain, depth);
 }
-#endif /* !defined(WITH_WOLFSSL) */
 
 NOEXPORT void log_time(const int level, const char *txt, ASN1_TIME *t) {
     char *cp;
@@ -767,7 +763,7 @@ NOEXPORT void log_time(const int level, const char *txt, ASN1_TIME *t) {
     str_free(cp);
 }
 
-#endif /* !defined(OPENSSL_NO_OCSP) */
+#endif /* !defined(OPENSSL_NO_OCSP)  && !defined(WITH_WOLFSSL) */
 
 char *X509_NAME2text(X509_NAME *name) {
     char *text;
