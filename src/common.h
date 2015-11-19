@@ -480,24 +480,11 @@ extern char *sys_errlist[];
 #define OPENSSL_NO_SSL3
 #endif /* !defined(OPENSSL_NO_SSL3) */
 #endif /*WOLFSSL_ALLOW_SSLv3 */
-#ifdef OPENSSL_NO_OCSP
-#undef OPENSSL_NO_OCSP
-#endif /* OPENSSL_NO_OCSP */
-#ifdef OPENSSL_NO_TLSEXT
-#undef OPENSSL_NO_TLSEXT
-#endif /* OPENSSL_NO_TLSEXT */
-#ifdef OPENSSL_NO_PSK
-#undef OPENSSL_NO_PSK
-#endif /* OPENSSL_NO_PSK */
-#ifdef OPENSSL_NO_TLS1_1
-#undef OPENSSL_NO_TLS1_1
-#endif /* OPENSSL_NO_TLS1_1 */
-#ifdef OPENSSL_NO_TLS1_2
-#undef OPENSSL_NO_TLS1_2
-#endif /* OPENSSL_NO_TLS1_2 */
+
 #ifndef OPENSSL_NO_ENGINE
 #define OPENSSL_NO_ENGINE
 #endif /* OPENSSL_NO_ENGINE */
+
 #ifndef OPENSSL_NO_COMP
 #define OPENSSL_NO_COMP
 #endif /* OPENSSL_NO_COMP */
