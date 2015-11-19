@@ -105,8 +105,6 @@ typedef int                 ssize_t;
 #define _CRT_SECURE_NO_DEPRECATE
 #define _CRT_NONSTDC_NO_DEPRECATE
 #define _CRT_NON_CONFORMING_SWPRINTFS
-#define HAVE_OSSL_ENGINE_H
-#define HAVE_OSSL_OCSP_H
 /* prevent including wincrypt.h, as it defines its own OCSP_RESPONSE */
 #define __WINCRYPT_H__
 #define S_EADDRINUSE  WSAEADDRINUSE
@@ -460,10 +458,10 @@ extern char *sys_errlist[];
 #define OPENSSL_NO_PSK
 #endif /* OpenSSL older than 1.0.0 */
 
-#if (OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1))
+#if OPENSSL_VERSION_NUMBER<0x10001000L || defined(OPENSSL_NO_TLS1)
 #define OPENSSL_NO_TLS1_1
 #define OPENSSL_NO_TLS1_2
-#endif /* (OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1)) */
+#endif /* OpenSSL older than 1.0.1 || defined(OPENSSL_NO_TLS1) */
 
 #if OPENSSL_VERSION_NUMBER>=0x10100000L
 #ifndef OPENSSL_NO_SSL2
@@ -490,14 +488,6 @@ extern char *sys_errlist[];
 #endif /* OPENSSL_NO_COMP */
 
 #endif /* defined (WITH_WOLFSSL) */
-
-#if !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE)
-#define OPENSSL_NO_ENGINE
-#endif /* !defined(HAVE_OSSL_ENGINE_H) && !defined(OPENSSL_NO_ENGINE) */
-
-#if !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
-#define OPENSSL_NO_OCSP
-#endif /* !defined(HAVE_OSSL_OCSP_H) && !defined(OPENSSL_NO_OCSP) */
 
 #if defined(USE_WIN32) && defined(OPENSSL_FIPS)
 #define USE_FIPS

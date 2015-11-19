@@ -734,7 +734,7 @@ NOEXPORT int sess_new_cb(SSL *ssl, SSL_SESSION *sess) {
     val_tmp=val=str_alloc((size_t)val_len);
     i2d_SSL_SESSION(sess, &val_tmp);
 
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL
     session_id=SSL_SESSION_get_id(sess, &session_id_length);
 #else
     session_id=(const unsigned char *)sess->session_id;
@@ -760,7 +760,7 @@ NOEXPORT SSL_SESSION *sess_get_cb(SSL *ssl,
         return NULL;
     val_tmp=val;
     sess=d2i_SSL_SESSION(NULL,
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL
         (const unsigned char **)
 #endif /* OpenSSL version >= 0.8.0 */
         &val_tmp, (long)val_len);
@@ -772,7 +772,7 @@ NOEXPORT void sess_remove_cb(SSL_CTX *ctx, SSL_SESSION *sess) {
     const unsigned char *session_id;
     unsigned int session_id_length;
 
-#if OPENSSL_VERSION_NUMBER>=0x0090800fL || defined(WITH_WOLFSSL)
+#if OPENSSL_VERSION_NUMBER>=0x0090800fL
     session_id=SSL_SESSION_get_id(sess, &session_id_length);
 #else
     session_id=(const unsigned char *)sess->session_id;

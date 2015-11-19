@@ -463,23 +463,6 @@ else
 valid_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS -I$SSLDIR/include"
 valid_LIBS="$LIBS"; LIBS="$LIBS -L$SSLDIR/lib64 -L$SSLDIR/lib -lssl -lcrypto"
 fi
-if test "x$ENABLED_WOLFSSL" = "xno"
-then
-AC_CHECK_HEADER([$SSLDIR/include/openssl/engine.h],
-    [AC_DEFINE([HAVE_OSSL_ENGINE_H], [1],
-    [Define to 1 if you have <engine.h> header file.])],
-    [AC_MSG_WARN([OpenSSL engine header not found])])
-
-AC_CHECK_HEADER([$SSLDIR/include/openssl/ocsp.h],
-    [AC_DEFINE([HAVE_OSSL_OCSP_H], [1],
-    [Define to 1 if you have <ocsp.h> header file.])],
-    [AC_MSG_WARN([OpenSSL ocsp header not found])])
-else
-    AC_DEFINE([HAVE_OSSL_OCSP_H], [1],
-    [Define to 1 if you have <ocsp.h> header file.])
-    AC_DEFINE([OPENSSL_NO_ENGINE], [1],
-    [Wolfssl does not currently support ENGINE with Stunnel])
-fi
 
 if test "x$use_fips" = "xauto"; then
     AC_CHECK_FUNCS(FIPS_mode_set, [
