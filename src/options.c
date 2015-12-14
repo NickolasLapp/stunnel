@@ -226,6 +226,12 @@ static char *stunnel_cipher_list=
 
 /**************************************** parse commandline parameters */
 
+/* return values:
+   0 - configuration accepted
+   1 - error
+   2 - information printed
+*/
+
 int options_cmdline(char *name, char *parameter) {
     CONF_TYPE type=CONF_FILE;
 
@@ -238,20 +244,20 @@ int options_cmdline(char *name, char *parameter) {
         parse_global_option(CMD_HELP, NULL, NULL);
         parse_service_option(CMD_HELP, NULL, NULL, NULL);
         log_flush(LOG_MODE_INFO);
-        return 1;
+        return 2;
     } else if(!strcasecmp(name, "-version")) {
         parse_global_option(CMD_DEFAULT, NULL, NULL);
         parse_service_option(CMD_DEFAULT, NULL, NULL, NULL);
         log_flush(LOG_MODE_INFO);
-        return 1;
+        return 2;
     } else if(!strcasecmp(name, "-sockets")) {
         print_socket_options();
         log_flush(LOG_MODE_INFO);
-        return 1;
+        return 2;
     } else if(!strcasecmp(name, "-options")) {
         print_ssl_options();
         log_flush(LOG_MODE_INFO);
-        return 1;
+        return 2;
     } else
 #ifndef USE_WIN32
     if(!strcasecmp(name, "-fd")) {
@@ -657,7 +663,8 @@ NOEXPORT char *parse_global_option(CMD cmd, char *opt, char *arg) {
         else
             return engine_open(arg);
     case CMD_END:
-        return engine_init();
+        engine_init();
+        break;
     case CMD_FREE:
         break;
     case CMD_DEFAULT:
@@ -2485,7 +2492,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
         section->option.sessiond=1;
 #ifdef SSL_OP_NO_TICKET
         /* disable RFC4507 support introduced in OpenSSL 0.9.8f */
-        /* this prevents session callbacks from beeing executed */
+        /* this prevents session callbacks from being executed */
         section->ssl_options_set|=SSL_OP_NO_TICKET;
 #endif
         if(!name2addr(&section->sessiond_addr, arg, 0))

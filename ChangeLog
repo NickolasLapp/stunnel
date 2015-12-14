@@ -1,12 +1,32 @@
 stunnel change log
 
-Version 5.27, unreleased, urgency: LOW
+Version 5.29, unreleased, urgency: LOW
+* Bugfixes
+  - Compilation fix for *BSD.
+
+Version 5.28, 2015.12.11, urgency: HIGH
 * New features
+  - Build matrix (.travis.yml) extended with ./configure options.
+  - mingw.mak updated to build tstunnel.exe (thx to Jose Alf.).
+* Bugfixes
+  - Fixed incomplete initialization.
+  - Fixed UCONTEXT threading on OSX.
+  - Fixed exit codes for information requests (as
+    in "stunnel -version" or "stunnel -help").
+
+Version 5.27, 2015.12.03, urgency: MEDIUM
+* Security bugfixes
+  - OpenSSL DLLs updated to version 1.0.2e.
+    https://www.openssl.org/news/secadv_20151203.txt
+* New features
+  - Automated build testing configured with .travis.yml.
   - Added reading server certificates from hardware engines.
     For example: cert = id_45
+  - Only attempt to use potentially harmful compiler or linker
+    options if gcc was detected.
   - /opt/csw added to the OpenSSL directory lookup list.
   - mingw.mak updates (thx to Jose Alf.).
-* Bugfixes
+  - TODO list updated.
 
 Version 5.26, 2015.11.06, urgency: MEDIUM
 * Bugfixes
@@ -17,8 +37,8 @@ Version 5.25, 2015.11.02, urgency: MEDIUM
   - SMTP client protocol negotiation support for
     "protocolUsername", "protocolPassword", and
     "protocolAuthentication" (thx to Douglas Harris).
-  - New service-level option "config" to specify OpenSSL
-    >=1.0.2 configuration commands (thx to Stephen Wall).
+  - New service-level option "config" to specify configuration
+    commands introduced in OpenSSL 1.0.2 (thx to Stephen Wall).
   - The global option "foreground" now also accepts "quiet"
     parameter, which does not enable logging to stderr.
   - Manual page updated.

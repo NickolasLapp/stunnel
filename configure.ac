@@ -1,13 +1,12 @@
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([stunnel],[5.27])
+AC_INIT([stunnel],[5.29])
 AC_MSG_NOTICE([**************************************** initialization])
 AC_CONFIG_AUX_DIR(auto)
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_HEADERS([src/config.h])
 AC_CONFIG_SRCDIR([src/stunnel.c])
 AM_INIT_AUTOMAKE
-AC_DEFINE([_GNU_SOURCE], [1], [Use GNU source])
 
 AM_CONDITIONAL([AUTHOR_TESTS], [test -d ".git"])
 AC_CANONICAL_HOST
@@ -17,6 +16,18 @@ define([esc], [`echo ]$1[ | tr abcdefghijklmnopqrstuvwxyz.- ABCDEFGHIJKLMNOPQRST
 AC_DEFINE_UNQUOTED(esc(CPU_$host_cpu))
 AC_DEFINE_UNQUOTED(esc(VENDOR_$host_vendor))
 AC_DEFINE_UNQUOTED(esc(OS_$host_os))
+
+case "$host_os" in
+*darwin*)
+    # OSX does not declare ucontext without _XOPEN_SOURCE
+    AC_DEFINE([_XOPEN_SOURCE], [500], [Use X/Open 5 with POSIX 1995])
+    # OSX does not declare chroot() without _DARWIN_C_SOURCE
+    AC_DEFINE([_DARWIN_C_SOURCE], [1], [Use Darwin source])
+    ;;
+*)
+    AC_DEFINE([_GNU_SOURCE], [1], [Use GNU source])
+    ;;
+esac
 
 AC_PROG_CC
 AM_PROG_CC_C_O
@@ -65,20 +76,22 @@ AC_ARG_WITH(threads,
 ])
 
 AC_MSG_NOTICE([**************************************** compiler/linker flags])
-AX_APPEND_COMPILE_FLAGS([-Wall])
-AX_APPEND_COMPILE_FLAGS([-Wextra])
-AX_APPEND_COMPILE_FLAGS([-Wpedantic])
-AX_APPEND_COMPILE_FLAGS([-Wformat=2])
-AX_APPEND_COMPILE_FLAGS([-Wconversion])
-AX_APPEND_COMPILE_FLAGS([-Wno-long-long])
-AX_APPEND_COMPILE_FLAGS([-Wno-deprecated-declarations])
-AX_APPEND_COMPILE_FLAGS([-fstack-protector])
-AX_APPEND_COMPILE_FLAGS([-fPIE])
+if test "$GCC" = yes; then
+    AX_APPEND_COMPILE_FLAGS([-Wall])
+    AX_APPEND_COMPILE_FLAGS([-Wextra])
+    AX_APPEND_COMPILE_FLAGS([-Wpedantic])
+    AX_APPEND_COMPILE_FLAGS([-Wformat=2])
+    AX_APPEND_COMPILE_FLAGS([-Wconversion])
+    AX_APPEND_COMPILE_FLAGS([-Wno-long-long])
+    AX_APPEND_COMPILE_FLAGS([-Wno-deprecated-declarations])
+    AX_APPEND_COMPILE_FLAGS([-fstack-protector])
+    AX_APPEND_COMPILE_FLAGS([-fPIE])
+    AX_APPEND_LINK_FLAGS([-fPIE -pie])
+    AX_APPEND_LINK_FLAGS([-Wl,-z,relro])
+    AX_APPEND_LINK_FLAGS([-Wl,-z,now])
+    AX_APPEND_LINK_FLAGS([-Wl,-z,noexecstack])
+fi
 AX_APPEND_COMPILE_FLAGS([-D_FORTIFY_SOURCE=2])
-AX_APPEND_LINK_FLAGS([-fPIE -pie])
-AX_APPEND_LINK_FLAGS([-Wl,-z,relro])
-AX_APPEND_LINK_FLAGS([-Wl,-z,now])
-AX_APPEND_LINK_FLAGS([-Wl,-z,noexecstack])
 
 AC_MSG_NOTICE([**************************************** libtool])
 LT_INIT([disable-static])

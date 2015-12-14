@@ -266,11 +266,8 @@
 /* Version number of package */
 #undef VERSION
 
-/* Define to 1 if you using WOLFSSL header file. */
-#undef WITH_WOLFSSL
-
-/* Define to 1 to enable WOLFSSL debug messages. */
-#undef WOLFSSL_DEBUG_ON
+/* Use Darwin source */
+#undef _DARWIN_C_SOURCE
 
 /* Use GNU source */
 #undef _GNU_SOURCE
@@ -289,6 +286,9 @@
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
 #undef _UINT8_T
+
+/* Use X/Open 5 with POSIX 1995 */
+#undef _XOPEN_SOURCE
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef gid_t
