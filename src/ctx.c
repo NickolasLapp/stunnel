@@ -54,9 +54,7 @@ NOEXPORT int matches_wildcard(char *, char *);
 /* DH/ECDH */
 #ifndef OPENSSL_NO_DH
 NOEXPORT int dh_init(SERVICE_OPTIONS *);
-#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *);
-#endif /*WITH_WOLFSSL*/
 #endif /* OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *);
@@ -290,6 +288,7 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
 	}
 #else
     DH *dh=NULL;
+
     s_log(LOG_DEBUG, "DH initialization");
 #ifndef OPENSSL_NO_ENGINE
     if(!section->engine) /* cert is a file and not an identifier */
@@ -303,9 +302,9 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
     }
 #endif /* WITH_WOLFSSL */
 
-    enter_critical_section(CRIT_DH); /* it only needs an rwlock here */
+    CRYPTO_r_lock(stunnel_locks[LOCK_DH]);
     SSL_CTX_set_tmp_dh(section->ctx, dh_params);
-    leave_critical_section(CRIT_DH);
+    CRYPTO_r_unlock(stunnel_locks[LOCK_DH]);
     dh_needed=1; /* generate temporary DH parameters in cron */
     section->option.dh_needed=1; /* update this context */
     s_log(LOG_INFO, "Using dynamic DH parameters");
