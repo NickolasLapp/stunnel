@@ -1,6 +1,6 @@
 /*
  *   stunnel       TLS offloading and load-balancing proxy
- *   Copyright (C) 1998-2015 Michal Trojnara <Michal.Trojnara@mirt.net>
+ *   Copyright (C) 1998-2016 Michal Trojnara <Michal.Trojnara@mirt.net>
  *
  *   This program is free software; you can redistribute it and/or modify it
  *   under the terms of the GNU General Public License as published by the
@@ -217,9 +217,9 @@ typedef struct service_options_struct {
     char *cert;                                             /* cert filename */
     char *key;                               /* pem (priv key/cert) filename */
     long session_size, session_timeout;
-    long ssl_options_set;
+    long unsigned ssl_options_set;
 #if OPENSSL_VERSION_NUMBER>=0x009080dfL
-    long ssl_options_clear;
+    long unsigned ssl_options_clear;
 #endif /* OpenSSL 0.9.8m or later */
     SSL_METHOD *client_method, *server_method;
     SOCKADDR_UNION sessiond_addr;
@@ -515,6 +515,7 @@ void sslerror(char *);
 /**************************************** prototypes for verify.c */
 
 int verify_init(SERVICE_OPTIONS *);
+void print_client_CA_list(const STACK_OF(X509_NAME) *);
 char *X509_NAME2text(X509_NAME *);
 
 /**************************************** prototypes for network.c */
@@ -528,6 +529,7 @@ int s_poll_canread(s_poll_set *, SOCKET);
 int s_poll_canwrite(s_poll_set *, SOCKET);
 int s_poll_hup(s_poll_set *, SOCKET);
 int s_poll_rdhup(s_poll_set *, SOCKET);
+int s_poll_err(s_poll_set *, SOCKET);
 int s_poll_wait(s_poll_set *, int, int);
 void s_poll_dump(s_poll_set *, int);
 
@@ -553,6 +555,7 @@ void client_main(CLI *);
 
 /**************************************** prototypes for network.c */
 
+int get_socket_error(const SOCKET);
 int s_connect(CLI *, SOCKADDR_UNION *, socklen_t);
 void s_write(CLI *, SOCKET fd, const void *, size_t);
 void s_read(CLI *, SOCKET fd, void *, size_t);

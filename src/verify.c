@@ -449,13 +449,17 @@ NOEXPORT int compare_pubkeys(X509 *c1, X509 *c2) {
 
 #if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 
-/* type checks not available -- use generic functions */
+#ifdef DEFINE_STACK_OF
+/* defined in openssl/safestack.h:
+ * DEFINE_SPECIAL_STACK_OF(OPENSSL_STRING, char) */
+#else /* DEFINE_STACK_OF */
 #ifndef sk_OPENSSL_STRING_num
 #define sk_OPENSSL_STRING_num(st) sk_num(st)
-#endif
+#endif /* sk_OPENSSL_STRING_num */
 #ifndef sk_OPENSSL_STRING_value
 #define sk_OPENSSL_STRING_value(st, i) sk_value((st),(i))
-#endif
+#endif /* sk_OPENSSL_STRING_value */
+#endif /* DEFINE_STACK_OF */
 
 NOEXPORT int ocsp_check(CLI *c, X509_STORE_CTX *callback_ctx) {
     X509 *cert;
@@ -764,6 +768,26 @@ NOEXPORT void log_time(const int level, const char *txt, ASN1_TIME *t) {
 }
 
 #endif /* !defined(OPENSSL_NO_OCSP)  && !defined(WITH_WOLFSSL) */
+
+void print_client_CA_list(const STACK_OF(X509_NAME) *ca_dn) {
+    char *ca_name;
+    int n, i;
+
+    if(!ca_dn) {
+        s_log(LOG_INFO, "No client CA list");
+        return;
+    }
+    n=sk_X509_NAME_num(ca_dn);
+    if(n==0) {
+        s_log(LOG_INFO, "Empty client CA list");
+        return;
+    }
+    for(i=0; i<n; ++i) {
+        ca_name=X509_NAME2text(sk_X509_NAME_value(ca_dn, i));
+        s_log(LOG_INFO, "Client CA: %s", ca_name);
+        str_free(ca_name);
+    }
+}
 
 char *X509_NAME2text(X509_NAME *name) {
     char *text;
