@@ -157,21 +157,15 @@ int verify_init(SERVICE_OPTIONS *section) {
 /* trusted CA names sent to clients for client cert selection */
 NOEXPORT void set_client_CA_list(SERVICE_OPTIONS *section) {
     STACK_OF(X509_NAME) *ca_dn;
-    char *ca_name;
-    int i;
 
     s_log(LOG_DEBUG, "Client CA list: %s", section->ca_file);
     ca_dn=SSL_load_client_CA_file(section->ca_file);
-    for(i=0; i<sk_X509_NAME_num(ca_dn); ++i) {
-        ca_name=X509_NAME2text(sk_X509_NAME_value(ca_dn, i));
-        s_log(LOG_INFO, "Client CA: %s", ca_name);
-        str_free(ca_name);
-    }
     SSL_CTX_set_client_CA_list(section->ctx, ca_dn);
+    print_client_CA_list(ca_dn);
 }
 
 #ifndef WITH_WOLFSSL
-int crl_init(SERVICE_OPTIONS *section) {
+NOEXPORT int crl_init(SERVICE_OPTIONS *section) {
     X509_STORE *store;
 
     store=SSL_CTX_get_cert_store(section->ctx);

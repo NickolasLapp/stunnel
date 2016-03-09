@@ -2643,7 +2643,7 @@ NOEXPORT char *parse_service_option(CMD cmd, SERVICE_OPTIONS *section,
             if(section->option.client ?
                     section->client_method==(SSL_METHOD *)SSLv2_client_method() :
                     section->server_method==(SSL_METHOD *)SSLv2_server_method())
-                    return "\"sslVersion = SSLv2\" not supported in FIPS mode";
+                return "\"sslVersion = SSLv2\" not supported in FIPS mode";
 #endif /* !defined(OPENSSL_NO_SSL2) */
 #ifndef OPENSSL_NO_SSL3
             if(section->option.client ?
