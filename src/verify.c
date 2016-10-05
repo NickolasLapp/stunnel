@@ -43,9 +43,11 @@
 /* verify initialization */
 NOEXPORT void set_client_CA_list(SERVICE_OPTIONS *section);
 NOEXPORT void auth_warnings(SERVICE_OPTIONS *);
+#ifndef WITH_WOLFSSL
 NOEXPORT int crl_init(SERVICE_OPTIONS *section);
 NOEXPORT int load_file_lookup(X509_STORE *, char *);
 NOEXPORT int add_dir_lookup(X509_STORE *, char *);
+#endif /*WITH_WOLFSSL*/
 
 /* verify callback */
 NOEXPORT int verify_callback(int, X509_STORE_CTX *);
@@ -56,17 +58,19 @@ NOEXPORT int cert_check_subject(CLI *, X509_STORE_CTX *);
 #endif /* OPENSSL_VERSION_NUMBER>=0x10002000L */
 NOEXPORT int cert_check_local(X509_STORE_CTX *);
 NOEXPORT int compare_pubkeys(X509 *, X509 *);
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 NOEXPORT int ocsp_check(CLI *, X509_STORE_CTX *);
 NOEXPORT int ocsp_request(CLI *, X509_STORE_CTX *, OCSP_CERTID *, char *);
 NOEXPORT OCSP_RESPONSE *ocsp_get_response(CLI *, OCSP_REQUEST *, char *);
-#endif
+#endif /*!defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL) */
 
 /* utility functions */
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 NOEXPORT X509 *get_current_issuer(X509_STORE_CTX *);
-NOEXPORT void log_time(const int, const char *, ASN1_TIME *);
 #endif
+#ifndef WITH_WOLFSSL
+NOEXPORT void log_time(const int, const char *, ASN1_TIME *);
+#endif /* !defined(WITH_WOLFSSL) */
 
 /**************************************** verify initialization */
 
@@ -86,8 +90,58 @@ int verify_init(SERVICE_OPTIONS *section) {
 
     /* CRL initialization */
     if(section->crl_file || section->crl_dir)
-        if(crl_init(section))
+#ifdef WITH_WOLFSSL
+    if(section->crl_dir) {
+        /* WOLFSSL handles CRL internally, no need to deal with lookups */
+        if(wolfSSL_CTX_EnableCRL(section->ctx, WOLFSSL_CRL_CHECKALL)
+                                                        != SSL_SUCCESS) {
+            sslerror("SSL_CTX_EnableCRL");
             return 1; /* FAILED */
+        } else if (wolfSSL_CTX_LoadCRL(section->ctx, section->crl_dir,
+                  SSL_FILETYPE_PEM, 0) != SSL_SUCCESS)
+        {
+            sslerror("SSL_CTX_LoadCRL");
+            return 1; /* FAILED */
+        }
+    }
+#else
+    if(crl_init(section))
+        return 1; /* FAILED */
+#endif /*WITH_WOLFSSL*/
+
+#ifdef WITH_WOLFSSL
+    if(section->ocsp_url)
+    {
+        if(wolfSSL_CTX_SetOCSP_OverrideURL(section->ctx, section->ocsp_url)
+                != SSL_SUCCESS) {
+            s_log(LOG_ERR, "Error setting OCSP Override URL to: %s)",
+                    section->ocsp_url);
+            sslerror("wolfSSL_CTX_SetOCSP_OverrideURL");
+            return 1; /* FAILED */
+        }
+        if(wolfSSL_CTX_EnableOCSP(section->ctx,
+                WOLFSSL_OCSP_URL_OVERRIDE) != SSL_SUCCESS) {
+            s_log(LOG_ERR, "Error enabling OCSP");
+            sslerror("wolfSSL_CTX_EnableOCSP");
+            return 1; /* FAILED */
+        }
+        s_log(LOG_DEBUG, "Enabled OCSP at URL: %s", section->ocsp_url);
+    }
+    if(section->option.aia==1)
+    {
+        if(section->ocsp_url) {
+            s_log(LOG_ERR, "Error: Cannot set ocsp lookup url with aia.");
+            s_log(LOG_ERR,"Please choose one. Error enabling OCSP");
+            sslerror("wolfSSL_CTX_EnableOCSP");
+        }
+        if(wolfSSL_CTX_EnableOCSP(section->ctx, 0) != SSL_SUCCESS) {
+            s_log(LOG_ERR, "Error enabling OCSP");
+            sslerror("wolfSSL_CTX_EnableOCSP");
+            return 1; /* FAILED */
+        }
+        s_log(LOG_INFO, "Enabled OCSP with aia extension.");
+    }
+#endif /* ifdef WITH_WOLFSSL */
 
     /* verify callback setup */
     if(section->option.request_cert) {
@@ -111,6 +165,7 @@ NOEXPORT void set_client_CA_list(SERVICE_OPTIONS *section) {
     print_client_CA_list(ca_dn);
 }
 
+#ifndef WITH_WOLFSSL
 NOEXPORT int crl_init(SERVICE_OPTIONS *section) {
     X509_STORE *store;
 
@@ -164,6 +219,7 @@ NOEXPORT int add_dir_lookup(X509_STORE *store, char *name) {
     s_log(LOG_DEBUG, "Added %s revocation lookup directory", name);
     return 0; /* OK */
 }
+#endif /*WITH_WOLFSSL*/
 
 /* issue warnings on insecure/missing authentication */
 NOEXPORT void auth_warnings(SERVICE_OPTIONS *section) {
@@ -242,14 +298,14 @@ NOEXPORT int verify_checks(CLI *c,
         str_free(subject);
         return 0; /* reject */
     }
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
     if((c->opt->ocsp_url || c->opt->option.aia) &&
             !ocsp_check(c, callback_ctx)) {
         s_log(LOG_WARNING, "Rejected by OCSP at depth=%d: %s", depth, subject);
         str_free(subject);
         return 0; /* reject */
     }
-#endif /* !defined(OPENSSL_NO_OCSP) */
+#endif /* !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL) */
 
     s_log(depth ? LOG_INFO : LOG_NOTICE,
         "Certificate accepted at depth=%d: %s", depth, subject);
@@ -397,7 +453,7 @@ NOEXPORT int compare_pubkeys(X509 *c1, X509 *c2) {
 
 /**************************************** OCSP checking */
 
-#ifndef OPENSSL_NO_OCSP
+#if !defined(OPENSSL_NO_OCSP) && !defined(WITH_WOLFSSL)
 
 #ifdef DEFINE_STACK_OF
 /* defined in openssl/safestack.h:
@@ -718,7 +774,7 @@ NOEXPORT void log_time(const int level, const char *txt, ASN1_TIME *t) {
     str_free(cp);
 }
 
-#endif /* !defined(OPENSSL_NO_OCSP) */
+#endif /* !defined(OPENSSL_NO_OCSP)  && !defined(WITH_WOLFSSL) */
 
 void print_client_CA_list(const STACK_OF(X509_NAME) *ca_dn) {
     char *ca_name;
@@ -742,6 +798,15 @@ void print_client_CA_list(const STACK_OF(X509_NAME) *ca_dn) {
 
 char *X509_NAME2text(X509_NAME *name) {
     char *text;
+#ifdef WITH_WOLFSSL
+    int sz;
+    sz=wolfSSL_X509_NAME_get_sz(name);
+    if(sz<=0)
+        return str_dup("Invalid X509_NAME");
+    text=str_alloc((size_t)sz+1); /* one byte for '\0' excape */
+    text=wolfSSL_X509_NAME_oneline(name, text, sz);
+    text[sz]='\0';
+#else
     BIO *bio;
     int n;
 
@@ -760,6 +825,7 @@ char *X509_NAME2text(X509_NAME *name) {
     }
     text[n]='\0';
     BIO_free(bio);
+#endif /* WITH_WOLFSSL */
     return text;
 }
 

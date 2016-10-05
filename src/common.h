@@ -45,7 +45,14 @@
 #define LIBWRAP_CLIENTS 5
 
 /* CPU stack size */
-#define DEFAULT_STACK_SIZE 65536
+#ifdef WITH_WOLFSSL
+	/* Default option for wolfssl is Tom's fastmath with timing resistance
+     * which providers far greater security. This can be reduced to
+     * 65536 if not using TFM timing resistance. */
+    #define DEFAULT_STACK_SIZE 131072
+#else
+    #define DEFAULT_STACK_SIZE 65536
+#endif
 /* #define DEBUG_STACK_SIZE */
 
 /* I/O buffer size: 18432 (0x4800) is the maximum size of SSL record payload */
@@ -408,6 +415,19 @@ extern char *sys_errlist[];
 #define S_ISREG(m) (((m)&S_IFMT)==S_IFREG)
 #endif
 
+/**************************************** wolfSSL headers */
+#ifdef WITH_WOLFSSL
+#include <wolfssl/options.h>
+#include <wolfssl/wolfcrypt/wc_port.h>
+#include <wolfssl/wolfcrypt/coding.h>
+#ifdef WOLFSSL_DEBUG_ON
+#include <wolfssl/wolfcrypt/logging.h>
+#endif /* WOLFSSL_DEBUG_ON */
+#include <wolfssl/wolfcrypt/dh.h>
+#include <wolfssl/wolfcrypt/error-crypt.h>
+#include <wolfssl/openssl/ec.h>
+#endif /* defined(WITH_WOLFSSL) */
+
 /**************************************** OpenSSL headers */
 
 #define OPENSSL_THREAD_DEFINES
@@ -456,12 +476,37 @@ extern char *sys_errlist[];
 #define X509_STORE_CTX_get0_chain(x) X509_STORE_CTX_get_chain(x)
 #endif /* OpenSSL 1.1.0 or newer */
 
+
+/* WOLFSSL_SPECIFIC ifdefs */
+#ifdef WITH_WOLFSSL
+
+#ifndef WOLFSSL_ALLOW_SSLV3
+#ifndef OPENSSL_NO_SSL3
+#define OPENSSL_NO_SSL3
+#endif /* !defined(OPENSSL_NO_SSL3) */
+#endif /*WOLFSSL_ALLOW_SSLv3 */
+
+#ifndef OPENSSL_NO_ENGINE
+#define OPENSSL_NO_ENGINE
+#endif /* OPENSSL_NO_ENGINE */
+
+#ifndef OPENSSL_NO_COMP
+#define OPENSSL_NO_COMP
+#endif /* OPENSSL_NO_COMP */
+
+#ifndef OPENSSL_NO_SSL2
+#define OPENSSL_NO_SSL2
+#endif /* !defined(OPENSSL_NO_SSL2) */
+
+#endif /* defined (WITH_WOLFSSL) */
+
 #if defined(USE_WIN32) && defined(OPENSSL_FIPS)
 #define USE_FIPS
 #endif
 
 #include <openssl/lhash.h>
 #include <openssl/ssl.h>
+#include <openssl/ssl23.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h> /* for CRYPTO_* and SSLeay_version */

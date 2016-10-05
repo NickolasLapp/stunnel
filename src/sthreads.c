@@ -45,7 +45,9 @@
 
 STUNNEL_RWLOCK stunnel_locks[STUNNEL_LOCKS];
 
-#if OPENSSL_VERSION_NUMBER<0x10100004L
+#if WITH_WOLFSSL
+#define CRYPTO_THREAD_lock_new wc_InitAndAllocMutex
+#elif OPENSSL_VERSION_NUMBER<0x10100004L
 #define CRYPTO_THREAD_lock_new() CRYPTO_get_new_dynlockid()
 #endif
 
@@ -294,7 +296,6 @@ int sthreads_init(void) {
     /* initialize stunnel critical sections */
     for(i=0; i<STUNNEL_LOCKS; i++)
         stunnel_locks[i]=CRYPTO_THREAD_lock_new();
-
     return 0;
 }
 
@@ -415,7 +416,6 @@ int sthreads_init(void) {
     /* initialize stunnel critical sections */
     for(i=0; i<STUNNEL_LOCKS; i++)
         stunnel_locks[i]=CRYPTO_THREAD_lock_new();
-
     return 0;
 }
 

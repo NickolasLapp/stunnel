@@ -50,7 +50,6 @@ NOEXPORT void signal_handler(int);
 
 int main(int argc, char* argv[]) { /* execution begins here 8-) */
     int retval;
-
 #ifdef M_MMAP_THRESHOLD
     mallopt(M_MMAP_THRESHOLD, 4096);
 #endif
@@ -69,6 +68,10 @@ NOEXPORT int main_unix(int argc, char* argv[]) {
     fd=open("/dev/null", O_RDWR); /* open /dev/null before chroot */
     if(fd==INVALID_SOCKET)
         fatal("Could not open /dev/null");
+#endif
+#ifdef WOLFSSL_DEBUG_ON
+    wolfSSL_Debugging_ON();
+    wolfSSL_SetLoggingCb((wolfSSL_Logging_cb)&wolfSSL_s_log);
 #endif
     main_init();
     configure_status=main_configure(argc>1 ? argv[1] : NULL,

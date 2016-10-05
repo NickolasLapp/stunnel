@@ -54,7 +54,9 @@ NOEXPORT int matches_wildcard(char *, char *);
 /* DH/ECDH */
 #ifndef OPENSSL_NO_DH
 NOEXPORT int dh_init(SERVICE_OPTIONS *);
+#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *);
+#endif /* WITH_WOLFSSL  */
 #endif /* OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *);
@@ -292,6 +294,16 @@ NOEXPORT int matches_wildcard(char *servername, char *pattern) {
 #ifndef OPENSSL_NO_DH
 
 NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
+
+#ifdef WITH_WOLFSSL
+    s_log(LOG_DEBUG, "DH initialization");
+    if(wolfSSL_CTX_SetTmpDH_file(section->ctx, section->cert,
+               SSL_FILETYPE_ASN1) == SSL_SUCCESS) { /* DH file loading failed */
+		return 0;
+     } else {
+		s_log(LOG_DEBUG, "Error loading DH params from file: %s", section->cert);
+	}
+#else
     DH *dh=NULL;
 
     s_log(LOG_DEBUG, "DH initialization");
@@ -305,6 +317,8 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
         DH_free(dh);
         return 0; /* OK */
     }
+#endif /* WITH_WOLFSSL */
+
     CRYPTO_THREAD_read_lock(stunnel_locks[LOCK_DH]);
     SSL_CTX_set_tmp_dh(section->ctx, dh_params);
     CRYPTO_THREAD_read_unlock(stunnel_locks[LOCK_DH]);
@@ -314,6 +328,7 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
     return 0; /* OK */
 }
 
+#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *cert) {
     DH *dh;
     BIO *bio;
@@ -338,6 +353,7 @@ NOEXPORT DH *dh_read(char *cert) {
     s_log(LOG_DEBUG, "Using DH parameters from %s", cert);
     return dh;
 }
+#endif /* WITH_WOLFSSL */
 
 #endif /* OPENSSL_NO_DH */
 
@@ -345,6 +361,12 @@ NOEXPORT DH *dh_read(char *cert) {
 
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
+#ifdef WITH_WOLFSSL
+    /* wolfSSL automatically detects ecdh parameters from ECC key file.
+     * No need to load explicitly */
+    (void)section;
+    return 0;
+#else
     EC_KEY *ecdh;
 
     s_log(LOG_DEBUG, "ECDH initialization");
@@ -360,6 +382,7 @@ NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
     s_log(LOG_DEBUG, "ECDH initialized with curve %s",
         OBJ_nid2ln(section->curve));
     return 0; /* OK */
+#endif /* WITH_WOLFSSL */
 }
 #endif /* OPENSSL_NO_ECDH */
 
@@ -588,6 +611,11 @@ NOEXPORT int pkcs12_extension(const char *filename) {
 }
 
 NOEXPORT int load_pkcs12_file(SERVICE_OPTIONS *section) {
+#ifdef WITH_WOLFSSL
+/* Currently no support for PKCS12 */
+    (void)section;
+    return 1;
+#else /* WITH_WOLFSSL */
     int i, success;
     UI_DATA ui_data;
     BIO *bio=NULL;
@@ -653,6 +681,7 @@ NOEXPORT int load_pkcs12_file(SERVICE_OPTIONS *section) {
     s_log(LOG_INFO, "Certificate and private key loaded from file: %s",
         section->cert);
     return 0; /* OK */
+#endif /* WITH_WOLFSSL */
 }
 
 NOEXPORT int load_cert_file(SERVICE_OPTIONS *section) {
@@ -783,6 +812,10 @@ NOEXPORT int passphrase_cb(char *buf, int size, int rwflag, void *userdata) {
 }
 
 NOEXPORT int ui_retry() {
+#ifdef WITH_WOLFSSL
+    /* WOLFSSL does not support ERR_peek_error */
+    return 0;
+#else
     unsigned long err=ERR_peek_error();
 
     switch(ERR_GET_LIB(err)) {
@@ -828,6 +861,7 @@ NOEXPORT int ui_retry() {
     default:
         return 0;
     }
+#endif /* WITH_WOLFSSL */
 }
 
 /**************************************** session callbacks */
@@ -1073,6 +1107,7 @@ NOEXPORT void info_callback(const SSL *ssl, int where, int ret) {
         s_log(LOG_DEBUG, "state = %x", state);
 #endif
 
+#ifndef WITH_WOLFSSL /* wolfSSL doesn't support get_state */
         /* log the client certificate request (if received) */
 #ifndef SSL3_ST_CR_CERT_REQ_A
         if(state==TLS_ST_CR_CERT_REQ)
@@ -1087,6 +1122,7 @@ NOEXPORT void info_callback(const SSL *ssl, int where, int ret) {
 #endif
             if(!SSL_get_client_CA_list(ssl))
                 s_log(LOG_INFO, "Client certificate not requested");
+#endif /* WITH_WOLFSSL */
 
         /* prevent renegotiation DoS attack */
         if((where&SSL_CB_HANDSHAKE_DONE)

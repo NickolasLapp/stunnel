@@ -510,6 +510,47 @@ NOEXPORT void ssl_start(CLI *c) {
 }
 
 NOEXPORT void new_chain(CLI *c) {
+#ifdef WITH_WOLFSSL
+    char* chain;
+    WOLFSSL_X509_CHAIN* certChain;
+    int i, certSz, idx, size;
+
+    if(c->opt->chain) /* already cached */
+        return; /* this race condition is safe to ignore */
+
+    certChain = wolfSSL_get_peer_chain(c->ssl);
+    if(!certChain) {
+        s_log(LOG_INFO, "No peer certificate received");
+        return;
+    return;
+    }
+
+    for(size=0, i=0; i < wolfSSL_get_chain_count(certChain); ++i) {
+        if(wolfSSL_get_chain_cert_pem(certChain, i, NULL, 0, &certSz)
+                != LENGTH_ONLY_E) {
+            s_log(LOG_ERR, "Unable to cache peer cert");
+            return;
+        }
+        size+=certSz;
+    }
+
+    chain=str_alloc_detached((size_t)size+1); /* +1 for '\0' */
+
+    idx = 0;
+    for(i=0; i <wolfSSL_get_chain_count(certChain); ++i) {
+        if(wolfSSL_get_chain_cert_pem(certChain, i, (unsigned char*)chain+idx,
+                   size-idx, &certSz) != SSL_SUCCESS){
+            s_log(LOG_ERR, "Unable to cache peer cert");
+            str_free(chain);
+            return;
+        }
+        idx+=certSz;
+    }
+    chain[size]='\0';
+    c->opt->chain=chain; /* this race condition is safe to ignore */
+    ui_new_chain(c->opt->section_number);
+    s_log(LOG_DEBUG, "Peer certificate was cached (%d bytes)", size);
+#else
     BIO *bio;
     int i, len;
     X509 *peer_cert;
@@ -553,6 +594,7 @@ NOEXPORT void new_chain(CLI *c) {
     c->opt->chain=chain; /* this race condition is safe to ignore */
     ui_new_chain(c->opt->section_number);
     s_log(LOG_DEBUG, "Peer certificate was cached (%d bytes)", len);
+#endif /* ifdef WITH_WOLFSSL */
 }
 
 /****************************** transfer data */

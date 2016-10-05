@@ -465,6 +465,11 @@ void s_log(int, const char *, ...)
 #else
     ;
 #endif
+
+#ifdef WOLFSSL_DEBUG_ON
+void wolfSSL_s_log(int , const char *);
+#endif
+
 char *log_id(CLI *);
 void fatal_debug(char *, const char *, int);
 #define fatal(a) fatal_debug((a), __FILE__, __LINE__)
@@ -650,15 +655,30 @@ typedef enum {
 #endif /* OPENSSL_NO_DH */
     STUNNEL_LOCKS                           /* number of locks */
 } LOCK_TYPE;
-#if OPENSSL_VERSION_NUMBER < 0x10100004L
+#ifdef WITH_WOLFSSL
+typedef wolfSSL_Mutex *STUNNEL_RWLOCK;
+#elif OPENSSL_VERSION_NUMBER < 0x10100004L
 typedef int STUNNEL_RWLOCK;
 #else
 typedef CRYPTO_RWLOCK *STUNNEL_RWLOCK;
 #endif
+
 extern STUNNEL_RWLOCK stunnel_locks[STUNNEL_LOCKS];
+
 #if OPENSSL_VERSION_NUMBER>=0x10100004L
 #define CRYPTO_THREAD_read_unlock(type) CRYPTO_THREAD_unlock(type)
 #define CRYPTO_THREAD_write_unlock(type) CRYPTO_THREAD_unlock(type)
+#elif defined(WITH_WOLFSSL)
+#define CRYPTO_THREAD_read_lock(type) \
+    if(type) CRYPTO_lock(type)
+#define CRYPTO_THREAD_read_unlock(type) \
+    if(type) CRYPTO_lock(type)
+#define CRYPTO_THREAD_write_lock(type) \
+    if(type) CRYPTO_lock(type)
+#define CRYPTO_THREAD_write_unlock(type) \
+    if(type) CRYPTO_lock(type)
+#define CRYPTO_atomic_add(addr,amount,result,type) \
+    *result = type ? CRYPTO_add(addr,amount,type) : (*addr+=amount)
 #else
 /* Emulate the OpenSSL 1.1 locking API for older OpenSSL versions */
 #define CRYPTO_THREAD_read_lock(type) \
