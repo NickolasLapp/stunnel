@@ -65,7 +65,7 @@ void s_poll_free(s_poll_set *fds) {
 
 void s_poll_init(s_poll_set *fds) {
     fds->nfds=0;
-    fds->allocated=4; /* prealloc 4 file desciptors */
+    fds->allocated=4; /* prealloc 4 file descriptors */
     s_poll_realloc(fds);
 }
 
@@ -360,7 +360,7 @@ void s_poll_free(s_poll_set *fds) {
 
 void s_poll_init(s_poll_set *fds) {
 #ifdef USE_WIN32
-    fds->allocated=4; /* prealloc 4 file desciptors */
+    fds->allocated=4; /* prealloc 4 file descriptors */
 #endif
     s_poll_realloc(fds);
     FD_ZERO(fds->irfds);
@@ -422,7 +422,7 @@ int s_poll_err(s_poll_set *fds, SOCKET fd) {
 }
 
 #ifdef USE_WIN32
-#define FD_SIZE(fds) (sizeof(u_int)+(fds)->allocated*sizeof(SOCKET))
+#define FD_SIZE(fds) (8+(fds)->allocated*sizeof(SOCKET))
 #else
 #define FD_SIZE(fds) (sizeof(fd_set))
 #endif

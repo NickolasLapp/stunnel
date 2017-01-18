@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 
-AC_INIT([stunnel],[5.36])
+AC_INIT([stunnel],[5.39])
 AC_MSG_NOTICE([**************************************** initialization])
 AC_CONFIG_AUX_DIR(auto)
 AC_CONFIG_MACRO_DIR([m4])
@@ -174,6 +174,8 @@ fi
 AC_MSG_CHECKING([for default group])
 AC_MSG_RESULT([$DEFAULT_GROUP])
 AC_SUBST([DEFAULT_GROUP])
+
+AC_SYS_LARGEFILE
 
 AC_MSG_NOTICE([**************************************** header files])
 # AC_HEADER_DIRENT
@@ -393,7 +395,7 @@ AC_ARG_ENABLE(libwrap,
     ]
 )
 
-AC_MSG_NOTICE([**************************************** SSL])
+AC_MSG_NOTICE([**************************************** TLS])
 
 AC_MSG_CHECKING([for compiler sysroot])
 if test "x$GCC" = "xyes"; then
@@ -456,7 +458,7 @@ AM_CONDITIONAL([WOLFSSL_DEBUG_ON], test "x$ENABLED_WOLFSSLDEBUG" = "xyes")
 if test "x$ENABLED_WOLFSSL" = "xno"
 then
     SSLDIR=""
-    AC_MSG_CHECKING([for SSL directory])
+    AC_MSG_CHECKING([for TLS directory])
     AC_ARG_WITH(ssl,
     [  --with-ssl=DIR          location of installed SSL libraries/include files],
         [check_ssl_dir "$withval"],
@@ -465,14 +467,14 @@ then
     if test -z "$SSLDIR"; then
     AC_MSG_RESULT([not found])
     AC_MSG_ERROR([
-    Could not find your SSL library installation dir
+    Could not find your TLS library installation dir
     Use --with-ssl option to fix this problem
     ]) 
     fi
 fi
 AC_MSG_RESULT([$SSLDIR])
 AC_SUBST([SSLDIR])
-AC_DEFINE_UNQUOTED([SSLDIR], ["$SSLDIR"], [SSL directory])
+AC_DEFINE_UNQUOTED([SSLDIR], ["$SSLDIR"], [TLS directory])
 
 
 if test "x$ENABLED_WOLFSSL" = "xyes"

@@ -49,7 +49,7 @@ endif
 stunnel_CPPFLAGS += -DLIBDIR='"$(pkglibdir)"'
 stunnel_CPPFLAGS += -DCONFDIR='"$(sysconfdir)/stunnel"'
 
-# SSL library
+# TLS library
 if WOLFSSL
 stunnel_LDFLAGS = -L$(SSLDIR)/lib64 -L$(SSLDIR)/lib -lwolfssl
 else

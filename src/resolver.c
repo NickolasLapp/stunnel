@@ -138,6 +138,7 @@ unsigned name2addr(SOCKADDR_UNION *addr, char *name, int passive) {
     if(retval)
         addrlist2addr(addr, addr_list);
     str_free(addr_list->addr);
+    str_free(addr_list->session);
     str_free(addr_list);
     return retval;
 }
@@ -153,6 +154,7 @@ unsigned hostport2addr(SOCKADDR_UNION *addr,
     if(num)
         addrlist2addr(addr, addr_list);
     str_free(addr_list->addr);
+    str_free(addr_list->session);
     str_free(addr_list);
     return num;
 }
@@ -174,7 +176,7 @@ NOEXPORT void addrlist2addr(SOCKADDR_UNION *addr, SOCKADDR_LIST *addr_list) {
         }
     }
 #endif
-    /* copy the first address resolved (curently AF_UNIX) */
+    /* copy the first address resolved (currently AF_UNIX) */
     memcpy(addr, &addr_list->addr[0], sizeof(SOCKADDR_UNION));
 }
 
@@ -194,6 +196,9 @@ unsigned name2addrlist(SOCKADDR_LIST *addr_list, char *name) {
             (addr_list->num+1)*sizeof(SOCKADDR_UNION));
         addr_list->addr[addr_list->num].un.sun_family=AF_UNIX;
         strcpy(addr_list->addr[addr_list->num].un.sun_path, name);
+        addr_list->session=str_realloc(addr_list->session,
+            (addr_list->num+1)*sizeof(SSL_SESSION *));
+        addr_list->session[addr_list->num]=NULL;
         ++(addr_list->num);
         return 1; /* ok - return the number of new addresses */
     }
@@ -235,6 +240,9 @@ unsigned hostport2addrlist(SOCKADDR_LIST *addr_list,
         hints.ai_family=AF_INET; /* first try IPv4 for passive requests */
         hints.ai_flags|=AI_PASSIVE;
     }
+#ifdef AI_ADDRCONFIG
+    hints.ai_flags|=AI_ADDRCONFIG;
+#endif
     for(;;) {
         err=getaddrinfo(host_name, port_name, &hints, &res);
         if(!err)
@@ -246,6 +254,12 @@ unsigned hostport2addrlist(SOCKADDR_LIST *addr_list,
             sleep(1);
             continue;
         }
+#ifdef AI_ADDRCONFIG
+        if(hints.ai_flags&AI_ADDRCONFIG) {
+            hints.ai_flags&=~AI_ADDRCONFIG;
+            continue; /* retry for unconfigured network interfaces */
+        }
+#endif
 #if defined(USE_IPv6) || defined(USE_WIN32)
         if(hints.ai_family==AF_INET) {
             hints.ai_family=AF_UNSPEC;
@@ -277,6 +291,9 @@ unsigned hostport2addrlist(SOCKADDR_LIST *addr_list,
             (addr_list->num+1)*sizeof(SOCKADDR_UNION));
         memcpy(&addr_list->addr[addr_list->num], cur->ai_addr,
             (size_t)cur->ai_addrlen);
+        addr_list->session=str_realloc(addr_list->session,
+            (addr_list->num+1)*sizeof(SSL_SESSION *));
+        addr_list->session[addr_list->num]=NULL;
         ++(addr_list->num);
         ++num;
     }
@@ -295,10 +312,9 @@ void addrlist_clear(SOCKADDR_LIST *addr_list, int passive) {
 NOEXPORT void addrlist_reset(SOCKADDR_LIST *addr_list) {
     addr_list->num=0;
     addr_list->addr=NULL;
-    addr_list->rr_val=0; /* reset the round-robin counter */
-    /* allow structures created with sockaddr_dup() to modify
-     * the original rr_val rather than its local copy */
-    addr_list->rr_ptr=&addr_list->rr_val;
+    addr_list->session=NULL;
+    addr_list->rr=0; /* reset the round-robin counter */
+    addr_list->parent=addr_list; /* allow a copy to locate its parent */
 }
 
 unsigned addrlist_dup(SOCKADDR_LIST *dst, const SOCKADDR_LIST *src) {
@@ -309,6 +325,7 @@ unsigned addrlist_dup(SOCKADDR_LIST *dst, const SOCKADDR_LIST *src) {
     } else { /* delayed resolver */
         addrlist_resolve(dst);
     }
+    /* we currently don't make a local copy of src->session */
     return dst->num;
 }
 
@@ -322,13 +339,13 @@ unsigned addrlist_resolve(SOCKADDR_LIST *addr_list) {
     switch(num) {
     case 0:
     case 1:
-        addr_list->rr_val=0;
+        addr_list->rr=0;
         break;
     default:
         /* randomize the initial value of round-robin counter */
         /* ignore the error value and the distribution bias */
         RAND_bytes((unsigned char *)&rnd, sizeof rnd);
-        addr_list->rr_val=rnd%num;
+        addr_list->rr=rnd%num;
     }
     return num;
 }

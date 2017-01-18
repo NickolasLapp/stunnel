@@ -107,9 +107,9 @@ void main_init() { /* one-time initialization */
 #endif
     /* basic initialization contains essential functions required for logging
      * subsystem to function properly, thus all errors here are fatal */
-    if(ssl_init()) /* initialize SSL library */
-        fatal("SSL initialization failed");
-    if(sthreads_init()) /* initialize critical sections & SSL callbacks */
+    if(ssl_init()) /* initialize TLS library */
+        fatal("TLS initialization failed");
+    if(sthreads_init()) /* initialize critical sections & TLS callbacks */
         fatal("Threads initialization failed");
     if(cron_init()) /* initialize periodic events */
         fatal("Cron initialization failed");
@@ -161,9 +161,9 @@ int main_configure(char *arg1, char *arg2) {
     if(drop_privileges(1))
         return 1;
 
-    /* log_open() must be be called after drop_privileges()
+    /* log_open() must be called after drop_privileges()
      * or logfile rotation won't be possible */
-    /* log_open() must be be called before daemonize()
+    /* log_open() must be called before daemonize()
      * since daemonize() invalidates stderr */
     if(log_open())
         return 1;

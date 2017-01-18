@@ -43,7 +43,9 @@
 #include "common.h"
 #include "prototypes.h"
 
+#ifndef USE_FORK
 STUNNEL_RWLOCK stunnel_locks[STUNNEL_LOCKS];
+#endif
 
 #if WITH_WOLFSSL
 #define CRYPTO_THREAD_lock_new wc_InitAndAllocMutex
@@ -296,6 +298,7 @@ int sthreads_init(void) {
     /* initialize stunnel critical sections */
     for(i=0; i<STUNNEL_LOCKS; i++)
         stunnel_locks[i]=CRYPTO_THREAD_lock_new();
+
     return 0;
 }
 
@@ -397,6 +400,7 @@ unsigned long stunnel_thread_id(void) {
 }
 
 int sthreads_init(void) {
+#ifndef USE_FORK
     int i;
 
 #if OPENSSL_VERSION_NUMBER<0x10100004L
@@ -416,6 +420,8 @@ int sthreads_init(void) {
     /* initialize stunnel critical sections */
     for(i=0; i<STUNNEL_LOCKS; i++)
         stunnel_locks[i]=CRYPTO_THREAD_lock_new();
+#endif /* USE_FORK */
+
     return 0;
 }
 
