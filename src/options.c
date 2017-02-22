@@ -223,8 +223,16 @@ static SERVICE_OPTIONS new_service_options;
 static char *option_not_found=
     "Specified option name is not valid here";
 
+#ifdef WITH_WOLFSSL
+/* Since wolfSSL doesn't suppor the same naming for cipher strings, we
+ * default to NULL and require the user to specify exact cipher_strings
+ * if they want to limit the cipher list */
+static char *stunnel_cipher_list=NULL;
+#else
 static char *stunnel_cipher_list=
     "HIGH:!DH:!aNULL:!SSLv2";
+#endif /* WITH_WOLFSSL */
+
 
 /**************************************** parse commandline parameters */
 

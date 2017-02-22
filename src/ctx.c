@@ -289,7 +289,7 @@ NOEXPORT int matches_wildcard(char *servername, char *pattern) {
 
 #ifndef OPENSSL_NO_DH
 
-#if OPENSSL_VERSION_NUMBER<0x10100000L
+#if(OPENSSL_VERSION_NUMBER<0x10100000L) && !defined(WITH_WOLFSSL)
 NOEXPORT STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx) {
     return ctx->cipher_list;
 }
