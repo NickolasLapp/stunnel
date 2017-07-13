@@ -297,13 +297,23 @@ NOEXPORT int matches_wildcard(char *servername, char *pattern) {
 
 #ifndef OPENSSL_NO_DH
 
-#if OPENSSL_VERSION_NUMBER<0x10100000L
+#if(OPENSSL_VERSION_NUMBER<0x10100000L) && !defined(WITH_WOLFSSL)
 NOEXPORT STACK_OF(SSL_CIPHER) *SSL_CTX_get_ciphers(const SSL_CTX *ctx) {
     return ctx->cipher_list;
 }
-#endif
+#endif /* (OPENSSL_VERSION_NUMBER<0x10100000L) && !defined(WITH_WOLFSSL) */
 
 NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
+
+#ifdef WITH_WOLFSSL
+    s_log(LOG_DEBUG, "DH initialization");
+    if(wolfSSL_CTX_SetTmpDH_file(section->ctx, section->cert,
+               SSL_FILETYPE_ASN1) == SSL_SUCCESS) { /* DH file loading failed */
+		return 0;
+     } else {
+		s_log(LOG_DEBUG, "Error loading DH params from file: %s", section->cert);
+	}
+#else
     DH *dh=NULL;
     int i, n;
     char description[128];
@@ -339,6 +349,8 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
         DH_free(dh);
         return 0; /* OK */
     }
+#endif /* WITH_WOLFSSL */
+
     CRYPTO_THREAD_read_lock(stunnel_locks[LOCK_DH]);
     SSL_CTX_set_tmp_dh(section->ctx, dh_params);
     CRYPTO_THREAD_read_unlock(stunnel_locks[LOCK_DH]);
@@ -348,6 +360,7 @@ NOEXPORT int dh_init(SERVICE_OPTIONS *section) {
     return 0; /* OK */
 }
 
+#ifndef WITH_WOLFSSL
 NOEXPORT DH *dh_read(char *cert) {
     DH *dh;
     BIO *bio;
@@ -372,6 +385,7 @@ NOEXPORT DH *dh_read(char *cert) {
     s_log(LOG_DEBUG, "Using DH parameters from %s", cert);
     return dh;
 }
+#endif /* WITH_WOLFSSL */
 
 #endif /* OPENSSL_NO_DH */
 
@@ -379,6 +393,12 @@ NOEXPORT DH *dh_read(char *cert) {
 
 #ifndef OPENSSL_NO_ECDH
 NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
+#ifdef WITH_WOLFSSL
+    /* wolfSSL automatically detects ecdh parameters from ECC key file.
+     * No need to load explicitly */
+    (void)section;
+    return 0;
+#else
     EC_KEY *ecdh;
 
     s_log(LOG_DEBUG, "ECDH initialization");
@@ -394,6 +414,7 @@ NOEXPORT int ecdh_init(SERVICE_OPTIONS *section) {
     s_log(LOG_DEBUG, "ECDH initialized with curve %s",
         OBJ_nid2ln(section->curve));
     return 0; /* OK */
+#endif /* WITH_WOLFSSL */
 }
 #endif /* OPENSSL_NO_ECDH */
 
